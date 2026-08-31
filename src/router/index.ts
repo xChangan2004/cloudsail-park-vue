@@ -1,6 +1,7 @@
 import {createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router'
 import {useTagsViewStore} from '@/stores'
 import Layout from '@/layout/index.vue'
+import {hasPerm} from "@/utils/permission"
 
 const routes: RouteRecordRaw[] = [
   {
@@ -32,7 +33,7 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/system/user/index.vue'),
             meta: {
               title: '用户管理',
-              icon: 'User'
+              icon: 'User',
             }
           },
           {
@@ -41,7 +42,7 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/system/role/index.vue'),
             meta: {
               title: '角色管理',
-              icon: 'User'
+              icon: 'User',
             }
           }
         ]
@@ -57,7 +58,16 @@ const router = createRouter({
   routes
 })
 
-// 记录访问过的页面到标签栏
+router.beforeEach((to) => {
+  // 页面级权限校验
+  if (to.meta?.perms && !hasPerm(to.meta.perms)) {
+    return {
+      path: '/dashboard',
+      replace: true
+    }
+  }
+})
+
 router.afterEach((to) => {
   // 设置页面标题
   document.title = to.meta?.title ? `${to.meta.title} - 云帆智泊` : '云帆智泊'

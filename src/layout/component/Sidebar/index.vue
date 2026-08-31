@@ -3,7 +3,8 @@ import {computed, type Component} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {Setting, PieChart, User} from '@element-plus/icons-vue'
 import {useAppStore} from '@/stores'
-import Logo from "./Logo.vue";
+import Logo from "./Logo.vue"
+import {hasPerm} from "@/utils/permission"
 
 const appStore = useAppStore()
 const route = useRoute()
@@ -14,7 +15,15 @@ const menus = computed(() => {
   const allRoutes = router.getRoutes()
   const layoutRoute = allRoutes.find(r => r.path === '/')
   // 过滤 hidden=true 的菜单
-  return (layoutRoute?.children ?? []).filter(item => !item.meta?.hidden)
+  return (layoutRoute?.children ?? [])
+    .filter(item => !item.meta?.hidden)
+    .filter(item => hasPerm(item.meta?.perms ?? ''))
+    .map(item => ({
+      ...item,
+      // 子路由也需要过滤，全空则整个目录不显示
+      children: item.children?.filter(c => hasPerm(c.meta?.perms ?? ''))
+    }))
+    .filter(item => !item.children || item.children.length > 0)
 })
 
 // icon 名 -> 组件，菜单多了往这补
