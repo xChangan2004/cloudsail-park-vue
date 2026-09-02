@@ -70,7 +70,8 @@ let reLoggingIn = false // 防止并发401弹多个提示
 const handleUnauthorized = () => {
   if (reLoggingIn) return
   reLoggingIn = true
-  useUserStore().resetState()
+  // 统一清理：动态路由、用户信息、标签栏
+  useUserStore().resetLoginState()
   ElMessage.warning('登录已过期，请重新登录')
   // 动态 import 避免 router ↔ request 循环引用
   import('@/router').then(({default: router}) => {

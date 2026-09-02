@@ -1,30 +1,39 @@
 <script setup lang="ts">
 import {computed, type Component} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
+import {useRoute} from 'vue-router'
 import {Setting, PieChart, User} from '@element-plus/icons-vue'
-import {useAppStore} from '@/stores'
+import {useAppStore, useUserStore} from '@/stores'
+import {joinPath} from '@/utils/menu'
 import Logo from "./Logo.vue"
-import {hasPerm} from "@/utils/permission"
 
 const appStore = useAppStore()
+const userStore = useUserStore()
 const route = useRoute()
-const router = useRouter()
 
-const menus = computed(() => {
-  // getRoutes()：拿到运行时全部路由（包含后续addRoute动态添加）
-  const allRoutes = router.getRoutes()
-  const layoutRoute = allRoutes.find(r => r.path === '/')
-  // 过滤 hidden=true 的菜单
-  return (layoutRoute?.children ?? [])
-    .filter(item => !item.meta?.hidden)
-    .filter(item => hasPerm(item.meta?.perms ?? ''))
-    .map(item => ({
-      ...item,
-      // 子路由也需要过滤，全空则整个目录不显示
-      children: item.children?.filter(c => hasPerm(c.meta?.perms ?? ''))
-    }))
-    .filter(item => !item.children || item.children.length > 0)
-})
+const menus = computed(() => userStore.menus
+  .filter(m => m.visible !== false)
+  .map(m => {
+  // 顶级单页：渲染成一级菜单
+  if (m.type === 2) {
+    return {
+      path: m.path,
+      meta: {
+        title: m.name, icon: m.icon
+      }
+    }
+  }
+  // 目录
+  return {
+    path: m.path,
+    meta: {title: m.name, icon: m.icon},
+    children: (m.children ?? [])
+      .filter(m => m.visible !== false)
+      .map(c => ({
+        path: joinPath(m.path, c.path),
+        meta: {title: c.name, icon: c.icon}
+      }))
+  }
+}))
 
 // icon 名 -> 组件，菜单多了往这补
 const iconMap: Record<string, Component> = {Setting, PieChart, User}
@@ -48,7 +57,7 @@ const activeMenu = computed(() => route.path)
       >
         <template v-for="item in menus" :key="item.path">
           <!-- 有 children -->
-          <el-sub-menu v-if="item.children?.length" :index="'/' + item.path">
+          <el-sub-menu v-if="item.children?.length" :index="item.path">
             <template #title>
               <el-icon v-if="getIcon(item.meta?.icon)">
                 <component :is="getIcon(item.meta?.icon)"/>
@@ -58,7 +67,7 @@ const activeMenu = computed(() => route.path)
             <el-menu-item
               v-for="child in item.children"
               :key="child.path"
-              :index="'/' + item.path + '/' + child.path"
+              :index="child.path"
             >
               <el-icon v-if="getIcon(child.meta?.icon)">
                 <component :is="getIcon(child.meta?.icon)"/>
@@ -67,7 +76,7 @@ const activeMenu = computed(() => route.path)
             </el-menu-item>
           </el-sub-menu>
           <!-- 无 children -->
-          <el-menu-item v-else :index="'/' + item.path">
+          <el-menu-item v-else :index="item.path">
             <el-icon v-if="getIcon(item.meta?.icon)">
               <component :is="getIcon(item.meta?.icon)"/>
             </el-icon>

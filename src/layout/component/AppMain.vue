@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import {ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
+import {useTagsViewStore} from '@/stores'
 
 const route = useRoute()
+const tagsViewStore = useTagsViewStore()
 const mainRef = ref<HTMLElement>()
 
 // 路由变了 → 滚动容器回到顶部
@@ -12,10 +14,12 @@ watch(() => route.path, () => {
 </script>
 
 <template>
-  <section class="app-main">
+  <section class="app-main" ref="mainRef">
     <router-view v-slot="{ Component }">
       <transition name="fade-transform" mode="out-in">
-        <component :is="Component"/>
+        <keep-alive :include="tagsViewStore.cachedViews">
+          <component :is="Component"/>
+        </keep-alive>
       </transition>
     </router-view>
   </section>

@@ -1,5 +1,7 @@
 import {defineStore} from 'pinia'
-import {loginApi, type LoginFormDTO, type LoginResult, logoutApi} from "@/api/user";
+import {loginApi, type LoginFormDTO, type LoginResult, logoutApi} from "@/api/user"
+import {resetRouteState} from '@/router'
+import {useTagsViewStore} from '@/stores'
 
 interface UserState {
   token: string
@@ -45,11 +47,14 @@ export const useUserStore = defineStore('user', {
       try {
         await logoutApi()
       } finally {
-        this.resetState()
+        this.resetLoginState()
       }
     },
-    resetState() {
+    // 清理登录态：动态路由 + 用户信息 + 标签栏（登出、401 过期统一走这里）
+    resetLoginState() {
+      resetRouteState()
       this.$reset()
+      useTagsViewStore().$reset()
     }
   },
   // 配置持久化

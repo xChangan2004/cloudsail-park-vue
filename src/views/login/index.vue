@@ -44,7 +44,6 @@ const handleLogin = async () => {
 
     loading.value = true
     try {
-      console.log('提交登录：', loginForm)
       // 登录成功
       await userStore.login(loginForm)
       ElNotification({

@@ -6,8 +6,7 @@
     // Extra safety for array and object lookups, but may have false positives.
     "noUncheckedIndexedAccess": true,
 
-    "baseUrl": ".",
-    // Path mapping for cleaner imports.
+    // Path mapping for cleaner imports (相对 tsconfig 所在目录，无需 baseUrl).
     "paths": {
       "@/*": ["./src/*"]
     },

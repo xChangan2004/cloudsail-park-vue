@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import {ref} from 'vue'
 import {Fold, Expand, FullScreen} from '@element-plus/icons-vue'
-import {useAppStore, useTagsViewStore, useUserStore} from "@/stores";
+import {useAppStore, useUserStore} from "@/stores";
 import BreadCrumb from './Breadcrumb.vue'
-import {ElMessage, ElMessageBox, ElNotification} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus";
 import {useRouter} from "vue-router";
 
 const router = useRouter()
@@ -33,14 +33,9 @@ const handleCommand = async (command: string) => {
         cancelButtonText: '取消',
         type: 'warning'
       })
+      // 路由、store、标签栏的清理都在 logout 内部统一处理
       await userStore.logout()
-      useTagsViewStore().$reset()
       await router.push('/login')
-      ElNotification({
-        title: '提示',
-        message: '退出登录成功',
-        type: 'error'
-      })
     } catch {
       // 用户点击了取消，什么也不做
     }

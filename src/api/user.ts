@@ -29,6 +29,8 @@ export interface MenuVO {
   icon?: string
   sort?: string
   children?: MenuVO[]
+  visible?: boolean
+  keepAlive?: boolean
 }
 
 /**
