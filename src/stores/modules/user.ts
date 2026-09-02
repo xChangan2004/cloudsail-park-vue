@@ -1,22 +1,25 @@
 import {defineStore} from 'pinia'
+import {loginApi, type LoginFormDTO, type LoginResult, logoutApi} from "@/api/user";
 
 interface UserState {
   token: string
-  name: string
-  nickname: string
-  avatar: string
+  username: string
+  nickname?: string
+  avatar?: string
   permList: string[]
   roleList: string[]
+  menus: LoginResult['menus']
 }
 
 export const useUserStore = defineStore('user', {
   state: (): UserState => ({
     token: '',
-    name: 'admin',
-    nickname: '哈哈',
-    avatar: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
+    username: '',
+    nickname: '',
+    avatar: '',
     permList: [],
-    roleList: []
+    roleList: [],
+    menus: []
   }),
   getters: {
     // 超管直接全通过
@@ -25,13 +28,30 @@ export const useUserStore = defineStore('user', {
     }
   },
   actions: {
-    logout() {
-      this.token = ''
-      this.name = ''
-      this.nickname = ''
-      this.avatar = ''
-      this.permList = []
-      this.roleList = []
+    async login(data: LoginFormDTO) {
+      const res = await loginApi(data)
+
+      this.token = res.token
+      this.username = res.userInfo.username ?? ''
+      this.nickname = res.userInfo.nickname ?? ''
+      this.avatar = res.userInfo.avatar ?? ''
+      this.permList = res.permList ?? []
+      this.roleList = res.roleList ?? []
+      this.menus = res.menus ?? []
+
+      return res
+    },
+    async logout() {
+      try {
+        await logoutApi()
+      } finally {
+        this.resetState()
+      }
+    },
+    resetState() {
+      this.$reset()
     }
-  }
+  },
+  // 配置持久化
+  persist: true
 })

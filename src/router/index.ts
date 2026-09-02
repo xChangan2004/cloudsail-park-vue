@@ -1,5 +1,5 @@
 import {createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router'
-import {useTagsViewStore} from '@/stores'
+import {useTagsViewStore, useUserStore} from '@/stores'
 import Layout from '@/layout/index.vue'
 import {hasPerm} from "@/utils/permission"
 
@@ -49,6 +49,14 @@ const routes: RouteRecordRaw[] = [
       }
     ]
   },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/login/index.vue'),
+    meta: {
+      title: '登录'
+    }
+  },
   // 404兜底，放最后
   {path: '/:pathMatch(.*)*', redirect: '/dashboard'}
 ]
@@ -59,7 +67,23 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  // 页面级权限校验
+  const userStore = useUserStore()
+  // 1.未登录，跳转至 /login
+  if (!userStore.token && to.path !== '/login') {
+    return {
+      path: '/login',
+      replace: true
+    }
+  }
+
+  // 2.已登录访问登录页，跳转首页（防止重复登录）
+  if (userStore.token && to.path === '/login') {
+    return {
+      path: '/dashboard'
+    }
+  }
+
+  // 3.页面权限校验，无权限返回首页
   if (to.meta?.perms && !hasPerm(to.meta.perms)) {
     return {
       path: '/dashboard',

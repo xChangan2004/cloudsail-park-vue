@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import {ref} from 'vue'
 import {Fold, Expand, FullScreen} from '@element-plus/icons-vue'
-import {useAppStore, useUserStore} from "@/stores";
+import {useAppStore, useTagsViewStore, useUserStore} from "@/stores";
 import BreadCrumb from './Breadcrumb.vue'
-import {ElMessage, ElMessageBox} from "element-plus";
+import {ElMessage, ElMessageBox, ElNotification} from "element-plus";
+import {useRouter} from "vue-router";
 
+const router = useRouter()
 const appStore = useAppStore();
 const userStore = useUserStore();
 
@@ -31,7 +33,14 @@ const handleCommand = async (command: string) => {
         cancelButtonText: '取消',
         type: 'warning'
       })
-      ElMessage.success("退出成功")
+      await userStore.logout()
+      useTagsViewStore().$reset()
+      await router.push('/login')
+      ElNotification({
+        title: '提示',
+        message: '退出登录成功',
+        type: 'error'
+      })
     } catch {
       // 用户点击了取消，什么也不做
     }
@@ -67,7 +76,7 @@ const handleCommand = async (command: string) => {
             <div class="user-profile-header">
               <el-avatar :size="40" :src="userStore.avatar"/>
               <div class="user-info-text">
-                <div class="username">{{ userStore.name || 'Super' }}</div>
+                <div class="username">{{ userStore.username || 'Super' }}</div>
                 <div class="nickname">{{ userStore.nickname || 'Admin' }}</div>
               </div>
             </div>
