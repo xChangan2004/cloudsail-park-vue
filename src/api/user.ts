@@ -1,4 +1,4 @@
-import {get, post} from '@/utils/request'
+import {get, post, put, del} from '@/utils/request'
 import type {PageDTO, PageParams} from '@/types/api'
 
 /**
@@ -72,7 +72,7 @@ export const logoutApi = () => {
  * 后台管理的用户信息（列表用）
  */
 export interface UserPageVO {
-  id: number
+  id: string
   username: string
   nickname: string
   phone: string
@@ -97,4 +97,76 @@ export interface UserPageParams extends PageParams {
  */
 export const pageUserApi = (params: UserPageParams) => {
   return get<PageDTO<UserPageVO>>('/admin/system/user/page', params)
+}
+
+/**
+ * 用户详情（编辑回显用，与后端 UserDetailVO 对应）
+ */
+export interface UserDetailVO {
+  id: string
+  nickname: string
+  phone?: string
+  avatar?: string
+  sex: 0 | 1
+  status: 0 | 1
+  roleIds: string[]
+}
+
+/**
+ * 新增/编辑用户表单
+ */
+export interface UserFormDTO {
+  /** 编辑时必带 */
+  id?: string | null
+  /** 仅新增 */
+  username?: string
+  /** 仅新增 */
+  password?: string
+  nickname: string
+  phone?: string
+  avatar?: string
+  sex: 0 | 1
+  roleIds?: string[]
+}
+
+/**
+ * 查询用户详情
+ */
+export const getUserApi = (id: string) => {
+  return get<UserDetailVO>(`/admin/system/user/${id}`)
+}
+
+/**
+ * 新增用户
+ */
+export const addUserApi = (data: UserFormDTO) => {
+  return post<null>('/admin/system/user', data)
+}
+
+/**
+ * 编辑用户
+ */
+export const editUserApi = (data: UserFormDTO) => {
+  return put<null>('/admin/system/user', data)
+}
+
+/**
+ * 重置密码
+ */
+export const resetPwdApi = (id: string) => {
+  return put<null>(`/admin/system/user/resetPwd/${id}`)
+}
+
+/**
+ * 删除用户
+ */
+export const delUserApi = (id: string) => {
+  return del<null>(`/admin/system/user/${id}`)
+}
+
+/**
+ * 切换用户状态
+ */
+export const updateUserStatusApi = (id: string, status: 0 | 1) => {
+  return put<null>(`/admin/system/user/${id}/status?status=${status}`)
 }

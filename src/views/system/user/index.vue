@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import {onMounted, reactive, ref} from 'vue'
-import {ElMessage} from 'element-plus'
+import {ElMessage, ElMessageBox} from 'element-plus'
 import {Plus} from '@element-plus/icons-vue'
-import {pageUserApi} from '@/api/user'
+import {delUserApi, pageUserApi, resetPwdApi, updateUserStatusApi} from '@/api/user'
 import type {UserPageVO} from '@/api/user'
 import SearchPanel from '@/components/SearchPanel/index.vue'
 import TablePanel from "@/components/TablePanel/index.vue";
 import TableTools from "@/components/TableTools/index.vue";
 import {usePaginationTable} from "@/hooks/usePaginationTable";
+import UserFormDialog from "@/views/system/user/UserFormDialog.vue";
 
 defineOptions({name: 'SystemUser'})
 
@@ -37,11 +38,6 @@ const handleSelectionChange = (rows: UserPageVO[]) => {
   selectedRows.value = rows
 }
 
-/** 未完成的功能统一占位提示 */
-const todo = (name: string) => {
-  ElMessage.info(`「${name}」功能开发中`)
-}
-
 /** 表格密度 */
 const tableSize = ref<'small' | 'default' | 'large'>('default')
 
@@ -64,6 +60,64 @@ const statusText = (status: number) => (status === 1 ? '启用' : '停用')
 const sexText = (sex: number) => (sex === 1 ? '男' : '女')
 
 onMounted(load)
+
+const dialogVisible = ref(false)
+const editingId = ref<string | null>(null)
+
+// 新增
+const handleAdd = () => {
+  editingId.value = null
+  dialogVisible.value = true
+}
+
+// 编辑
+const handleEdit = (row: UserPageVO) => {
+  editingId.value = row.id
+  dialogVisible.value = true
+}
+
+// 重置密码
+const handleResetPwd = async (row: UserPageVO) => {
+  try {
+    await ElMessageBox.confirm(`确认将用户 [${row.username}] 的密码重置为默认密码吗？`, '提示', {
+      type: 'warning',
+      confirmButtonText: '重置',
+      confirmButtonClass: 'el-button--danger'
+    })
+  } catch {
+    return // 用户点了取消
+  }
+  await resetPwdApi(row.id)
+  ElMessage.success('重置成功')
+}
+
+// 删除
+const handleDelete = async (row: UserPageVO) => {
+  try {
+    await ElMessageBox.confirm(`确认要删除用户 [${row.username}] 吗？`, '提示', {
+      type: 'warning',
+      confirmButtonText: '确认',
+      confirmButtonClass: 'el-button--danger'
+    })
+  } catch {
+    return // 用户点了取消
+  }
+  await delUserApi(row.id)
+  ElMessage.success('删除成功')
+  await load()
+}
+
+/**
+ * 行内状态开关：before-change 里调接口
+ * 成功 → 改 row.status 开关翻转；失败 → reject 开关不动
+ */
+const handleStatusBeforeChange = async (row: UserPageVO) => {
+  const next = row.status === 1 ? 0 : 1
+  await updateUserStatusApi(row.id, next)
+  row.status = next
+  ElMessage.success('切换状态成功')
+  return true
+}
 </script>
 
 <template>
@@ -87,7 +141,7 @@ onMounted(load)
     <!-- 表格面板 -->
     <TablePanel :pagination="pagination" @page-change="load">
       <template #toolbar-left>
-        <el-button type="primary" :icon="Plus" @click="todo('新增')">新增</el-button>
+        <el-button type="primary" :icon="Plus" @click="handleAdd">新增</el-button>
       </template>
       <template #toolbar-right>
         <TableTools v-model:size="tableSize" :columns="columnSettings" @refresh="load"/>
@@ -130,10 +184,12 @@ onMounted(load)
         </el-table-column>
         <el-table-column v-if="isColVisible('status')" prop="status" label="状态" width="90" align="center">
           <template #default="{row}">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'" effect="light">{{
-                statusText(row.status)
-              }}
-            </el-tag>
+            <el-switch
+              :model-value="row.status"
+              :active-value="1"
+              :inactive-value="0"
+              :before-change="() => handleStatusBeforeChange(row)"
+            />
           </template>
         </el-table-column>
         <el-table-column v-if="isColVisible('loginIp')" prop="loginIp" label="最后登录IP" min-width="170"
@@ -144,12 +200,14 @@ onMounted(load)
                          align="center" sortable/>
         <el-table-column label="操作" width="140" align="center" fixed="right">
           <template #default="{row}">
-            <el-button link type="primary" @click="todo('编辑')">编辑</el-button>
-            <el-button link type="danger" @click="todo('删除')">删除</el-button>
+            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
+            <el-button link type="warning" @click="handleResetPwd(row)">重置密码</el-button>
+            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
     </TablePanel>
+    <UserFormDialog v-model="dialogVisible" :id="editingId" @success="load"/>
   </div>
 </template>
 
