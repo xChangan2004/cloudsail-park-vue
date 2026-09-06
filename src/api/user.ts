@@ -1,4 +1,5 @@
-import {post} from '@/utils/request'
+import {get, post} from '@/utils/request'
+import type {PageDTO, PageParams} from '@/types/api'
 
 /**
  * 用户基本信息
@@ -65,4 +66,35 @@ export const loginApi = (data: LoginFormDTO) => {
  */
 export const logoutApi = () => {
   return post<null>('/admin/system/user/logout')
+}
+
+/**
+ * 后台管理的用户信息（列表用）
+ */
+export interface UserPageVO {
+  id: number
+  username: string
+  nickname: string
+  phone: string
+  avatar: string
+  status: number
+  loginIp: string
+  loginDate: string
+  createTime: string
+}
+
+/**
+ * 用户分页查询参数
+ */
+export interface UserPageParams extends PageParams {
+  username?: string
+  phone?: string
+  status?: number
+}
+
+/**
+ * 分页查询用户列表
+ */
+export const pageUserApi = (params: UserPageParams) => {
+  return get<PageDTO<UserPageVO>>('/admin/system/user/page', params)
 }
