@@ -53,9 +53,6 @@ const columnSettings = reactive([
 ])
 const isColVisible = (prop: string) => columnSettings.find(c => c.prop === prop)?.visible ?? true
 
-/** 用户状态文本 */
-const statusText = (status: number) => (status === 1 ? '启用' : '停用')
-
 /** 用户性别文本 */
 const sexText = (sex: number) => (sex === 1 ? '男' : '女')
 
