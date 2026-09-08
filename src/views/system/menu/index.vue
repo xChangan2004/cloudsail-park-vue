@@ -2,10 +2,9 @@
 import {onMounted, reactive, ref} from "vue";
 import SearchPanel from "@/components/SearchPanel/index.vue";
 import TablePanel from "@/components/TablePanel/index.vue";
-import {Plus} from "@element-plus/icons-vue";
 import TableTools from "@/components/TableTools/index.vue";
-import {menuListApi, type MenuSimpleVO} from "@/api/menu.ts";
-import type {TableInstance} from "element-plus";
+import {delMenuApi, menuListApi, type MenuSimpleVO} from "@/api/menu.ts";
+import {ElMessage, ElMessageBox, type TableInstance} from "element-plus";
 
 defineOptions({name: 'SystemMenu'})
 
@@ -77,6 +76,22 @@ const typeTag = (type: MenuSimpleVO['type']) => ({1: 'info', 2: 'primary', 3: 'd
 /** 状态展示 */
 const statusText = (status: MenuSimpleVO['status']) => ({0: '禁用', 1: '启用'})[status]
 const statusTag = (status: MenuSimpleVO['status']) => ({0: 'danger', 1: 'success'})[status]
+
+// 删除
+const handleDelete = async (row: MenuSimpleVO) => {
+  try {
+    await ElMessageBox.confirm(`确定要删除该菜单吗？删除后无法恢复`, '提示', {
+      type: 'warning',
+      confirmButtonText: '确定',
+      confirmButtonClass: 'el-button--danger'
+    })
+  } catch {
+    return
+  }
+  await delMenuApi(row.id)
+  ElMessage.success('删除菜单成功')
+  await load()
+}
 </script>
 
 <template>
@@ -102,7 +117,7 @@ const statusTag = (status: MenuSimpleVO['status']) => ({0: 'danger', 1: 'success
 
     <TablePanel>
       <template #toolbar-left>
-        <el-button :icon="Plus" type="primary">新增</el-button>
+        <el-button icon="Plus" type="primary">新增</el-button>
         <el-button type="success" @click="toggleExpandAll">{{ isAllExpanded ? '收起' : '展开' }}</el-button>
       </template>
 
@@ -139,6 +154,13 @@ const statusTag = (status: MenuSimpleVO['status']) => ({0: 'danger', 1: 'success
         </el-table-column>
         <el-table-column v-if="isColVisible('createTime')" label="创建时间" prop="createTime" min-width="170"
                          align="center" sortable/>
+        <el-table-column label="操作" min-width="170" fixed="right">
+          <template #default="{row}">
+            <el-button icon="Plus" type="primary" size="small" title="新增菜单"/>
+            <el-button icon="Edit" type="warning" size="small" title="编辑菜单"/>
+            <el-button icon="Delete" type="danger" size="small" title="删除菜单" @click="handleDelete(row)"/>
+          </template>
+        </el-table-column>
       </el-table>
     </TablePanel>
   </div>

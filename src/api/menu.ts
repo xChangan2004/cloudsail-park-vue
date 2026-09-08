@@ -1,4 +1,4 @@
-import {get} from '@/utils/request'
+import {get, del} from '@/utils/request'
 
 /**
  * 菜单节点（菜单管理表格 & 角色分配权限树共用同一接口、同一类型）
@@ -34,4 +34,11 @@ export interface MenuQueryParams {
  */
 export const menuListApi = (params: MenuQueryParams) => {
   return get<MenuSimpleVO[]>('/admin/system/menu/list', params)
+}
+
+/**
+ * 删除菜单
+ */
+export const delMenuApi = (id: string) => {
+  return del<null>(`/admin/system/menu/${id}`)
 }
