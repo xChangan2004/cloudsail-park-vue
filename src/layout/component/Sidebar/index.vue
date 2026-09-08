@@ -35,10 +35,6 @@ const menus = computed(() => userStore.menus
   }
 }))
 
-// icon 名 -> 组件，菜单多了往这补
-const iconMap: Record<string, Component> = {Setting, PieChart, User}
-const getIcon = (name?: string) => iconMap[name ?? '']
-
 const activeMenu = computed(() => route.path)
 </script>
 
@@ -59,8 +55,8 @@ const activeMenu = computed(() => route.path)
           <!-- 有 children -->
           <el-sub-menu v-if="item.children?.length" :index="item.path">
             <template #title>
-              <el-icon v-if="getIcon(item.meta?.icon)">
-                <component :is="getIcon(item.meta?.icon)"/>
+              <el-icon v-if="item.meta?.icon">
+                <component :is="item.meta?.icon"/>
               </el-icon>
               <span>{{ item.meta?.title }}</span>
             </template>
@@ -69,16 +65,16 @@ const activeMenu = computed(() => route.path)
               :key="child.path"
               :index="child.path"
             >
-              <el-icon v-if="getIcon(child.meta?.icon)">
-                <component :is="getIcon(child.meta?.icon)"/>
+              <el-icon v-if="child.meta?.icon">
+                <component :is="child.meta?.icon"/>
               </el-icon>
               <template #title>{{ child.meta?.title }}</template>
             </el-menu-item>
           </el-sub-menu>
           <!-- 无 children -->
           <el-menu-item v-else :index="item.path">
-            <el-icon v-if="getIcon(item.meta?.icon)">
-              <component :is="getIcon(item.meta?.icon)"/>
+            <el-icon v-if="item.meta?.icon">
+              <component :is="item.meta?.icon"/>
             </el-icon>
             <template #title>{{ item.meta?.title }}</template>
           </el-menu-item>
