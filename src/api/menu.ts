@@ -15,14 +15,23 @@ export interface MenuSimpleVO {
   path?: string
   icon?: string
   component?: string
-  status?: 0 | 1
+  status: 0 | 1
   createTime?: string
   children?: MenuSimpleVO[]
 }
 
 /**
+ * 菜单查询参数（菜单管理搜索用）
+ */
+export interface MenuQueryParams {
+  name?: string
+  type?: 1 | 2 | 3
+  status?: 0 | 1
+}
+
+/**
  * 菜单树：菜单管理表格、角色分配权限树共用
  */
-export const menuListApi = () => {
-  return get<MenuSimpleVO[]>('/admin/system/menu/list')
+export const menuListApi = (params: MenuQueryParams) => {
+  return get<MenuSimpleVO[]>('/admin/system/menu/list', params)
 }
