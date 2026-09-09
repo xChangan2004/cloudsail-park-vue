@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import {computed, type Component} from 'vue'
+import {computed} from 'vue'
 import {useRoute} from 'vue-router'
-import {Setting, PieChart, User} from '@element-plus/icons-vue'
 import {useAppStore, useUserStore} from '@/stores'
 import {joinPath} from '@/utils/menu'
 import Logo from "./Logo.vue"
@@ -13,27 +12,27 @@ const route = useRoute()
 const menus = computed(() => userStore.menus
   .filter(m => m.visible !== false)
   .map(m => {
-  // 顶级单页：渲染成一级菜单
-  if (m.type === 2) {
-    return {
-      path: m.path,
-      meta: {
-        title: m.name, icon: m.icon
+    // 顶级单页：渲染成一级菜单
+    if (m.type === 2) {
+      return {
+        path: m.path,
+        meta: {
+          title: m.name, icon: m.icon
+        }
       }
     }
-  }
-  // 目录
-  return {
-    path: m.path,
-    meta: {title: m.name, icon: m.icon},
-    children: (m.children ?? [])
-      .filter(m => m.visible !== false)
-      .map(c => ({
-        path: joinPath(m.path, c.path),
-        meta: {title: c.name, icon: c.icon}
-      }))
-  }
-}))
+    // 目录
+    return {
+      path: m.path,
+      meta: {title: m.name, icon: m.icon},
+      children: (m.children ?? [])
+        .filter(m => m.visible !== false)
+        .map(c => ({
+          path: joinPath(m.path, c.path),
+          meta: {title: c.name, icon: c.icon}
+        }))
+    }
+  }))
 
 const activeMenu = computed(() => route.path)
 </script>
@@ -91,7 +90,6 @@ const activeMenu = computed(() => route.path)
   flex-direction: column;
   background-color: #FFF;
   border-right: 1px solid #00000014;
-  padding: 0 8px;
 
   .el-scrollbar {
     flex: 1;
@@ -117,6 +115,5 @@ const activeMenu = computed(() => route.path)
   .el-menu-item.is-active {
     background-color: #EEF3FF;
   }
-
 }
 </style>
