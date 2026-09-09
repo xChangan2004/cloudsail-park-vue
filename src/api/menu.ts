@@ -1,10 +1,10 @@
-import {get, del} from '@/utils/request'
+import {get, del, post, put} from '@/utils/request'
 
 /**
  * 菜单节点（菜单管理表格 & 角色分配权限树共用同一接口、同一类型）
  */
 export interface MenuSimpleVO {
-  id: string
+  id?: string
   parentId: string
   name: string
   /** 权限标识，如 system:user:add（目录可能为空） */
@@ -41,4 +41,33 @@ export const menuListApi = (params: MenuQueryParams) => {
  */
 export const delMenuApi = (id: string) => {
   return del<null>(`/admin/system/menu/${id}`)
+}
+
+/**
+ * 系统菜单，继承SimpleVO的同时，排除children属性
+ */
+export interface SysMenu extends Omit<MenuSimpleVO, 'children'> {
+  visible: boolean
+  keepAlive: boolean
+}
+
+/**
+ * 查询菜单详情
+ */
+export const getMenuApi = (id: string) => {
+  return get<SysMenu>(`/admin/system/menu/${id}`)
+}
+
+/**
+ * 新增菜单
+ */
+export const addMenuApi = (data: SysMenu) => {
+  return post<null>('/admin/system/menu', data)
+}
+
+/**
+ * 修改菜单
+ */
+export const editMenuApi = (data: SysMenu) => {
+  return put<null>('/admin/system/menu', data)
 }

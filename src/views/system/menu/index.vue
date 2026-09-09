@@ -5,6 +5,7 @@ import TablePanel from "@/components/TablePanel/index.vue";
 import TableTools from "@/components/TableTools/index.vue";
 import {delMenuApi, menuListApi, type MenuSimpleVO} from "@/api/menu.ts";
 import {ElMessage, ElMessageBox, type TableInstance} from "element-plus";
+import MenuFormDialog from "@/views/system/menu/MenuFormDialog.vue";
 
 defineOptions({name: 'SystemMenu'})
 
@@ -80,7 +81,7 @@ const statusTag = (status: MenuSimpleVO['status']) => ({0: 'danger', 1: 'success
 // 删除
 const handleDelete = async (row: MenuSimpleVO) => {
   try {
-    await ElMessageBox.confirm(`确定要删除该菜单吗？删除后无法恢复`, '提示', {
+    await ElMessageBox.confirm(`确定要删除「${row.name}」菜单吗？删除后无法恢复`, '提示', {
       type: 'warning',
       confirmButtonText: '确定',
       confirmButtonClass: 'el-button--danger'
@@ -88,9 +89,33 @@ const handleDelete = async (row: MenuSimpleVO) => {
   } catch {
     return
   }
-  await delMenuApi(row.id)
+  await delMenuApi(row.id!)
   ElMessage.success('删除菜单成功')
   await load()
+}
+
+const dialogVisible = ref(false)
+const dialogId = ref<string | null>(null)
+const dialogParentId = ref<string | null>(null)
+const dialogParentType = ref<1 | 2 | 3 | null>(null)
+
+const handleAdd = () => {
+  dialogId.value = null
+  dialogParentId.value = null
+  dialogParentType.value = null
+  dialogVisible.value = true
+}
+
+const handleAddChild = (row: MenuSimpleVO) => {
+  dialogId.value = null
+  dialogParentId.value = row.id!
+  dialogParentType.value = row.type
+  dialogVisible.value = true
+}
+
+const handleEdit = (row: MenuSimpleVO) => {
+  dialogId.value = row.id!
+  dialogVisible.value = true
 }
 </script>
 
@@ -117,7 +142,7 @@ const handleDelete = async (row: MenuSimpleVO) => {
 
     <TablePanel>
       <template #toolbar-left>
-        <el-button icon="Plus" type="primary">新增</el-button>
+        <el-button icon="Plus" type="primary" v-perm="'system:menu:add'" @click="handleAdd">新增</el-button>
         <el-button type="success" @click="toggleExpandAll">{{ isAllExpanded ? '收起' : '展开' }}</el-button>
       </template>
 
@@ -141,7 +166,7 @@ const handleDelete = async (row: MenuSimpleVO) => {
             <el-tag :type="typeTag(row.type)">{{ typeText(row.type) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column v-if="isColVisible('sort')" label="排序" prop="sort" min-width="90" align="center" sortable/>
+        <el-table-column v-if="isColVisible('sort')" label="排序" prop="sort" min-width="90" align="center"/>
         <el-table-column v-if="isColVisible('permission')" label="权限标识" prop="permission" min-width="200"
                          align="center"/>
         <el-table-column v-if="isColVisible('path')" label="路由地址" prop="path" min-width="200" align="center"/>
@@ -153,16 +178,21 @@ const handleDelete = async (row: MenuSimpleVO) => {
           </template>
         </el-table-column>
         <el-table-column v-if="isColVisible('createTime')" label="创建时间" prop="createTime" min-width="170"
-                         align="center" sortable/>
+                         align="center"/>
         <el-table-column label="操作" min-width="170" fixed="right">
           <template #default="{row}">
-            <el-button icon="Plus" type="primary" size="small" title="新增菜单"/>
-            <el-button icon="Edit" type="warning" size="small" title="编辑菜单"/>
-            <el-button icon="Delete" type="danger" size="small" title="删除菜单" @click="handleDelete(row)"/>
+            <el-button icon="Plus" type="primary" size="small" title="新增菜单" v-perm="'system:menu:add'"
+                       @click="handleAddChild(row as MenuSimpleVO)"/>
+            <el-button icon="Edit" type="warning" size="small" title="编辑菜单" v-perm="'system:menu:edit'"
+                       @click="handleEdit(row as MenuSimpleVO)"/>
+            <el-button icon="Delete" type="danger" size="small" title="删除菜单" v-perm="'system:menu:delete'"
+                       @click="handleDelete(row as MenuSimpleVO)"/>
           </template>
         </el-table-column>
       </el-table>
     </TablePanel>
+    <MenuFormDialog v-model="dialogVisible" :id="dialogId" :parent-id="dialogParentId"
+                    @success="load"/>
   </div>
 </template>
 

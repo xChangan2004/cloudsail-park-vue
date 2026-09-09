@@ -79,7 +79,7 @@ const handleDelete = async (row: SysRole) => {
   } catch {
     return // 用户点击了取消
   }
-  await delRoleApi(row.id as string)
+  await delRoleApi(row.id!)
   ElMessage.success('删除成功')
   await load()
 }
