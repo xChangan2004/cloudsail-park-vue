@@ -2,7 +2,6 @@
 import {onMounted, reactive, ref} from "vue";
 import SearchPanel from "@/components/SearchPanel/index.vue";
 import TablePanel from "@/components/TablePanel/index.vue";
-import {Plus} from "@element-plus/icons-vue";
 import TableTools from "@/components/TableTools/index.vue";
 import {usePaginationTable} from "@/hooks/usePaginationTable";
 import {pageRoleApi, type SysRole, delRoleApi} from "@/api/role";
@@ -115,7 +114,7 @@ const handleAssignPerm = (row: SysRole) => {
     <!-- 表格面板 -->
     <TablePanel :pagination="pagination" @page-change="load">
       <template #toolbar-left>
-        <el-button type="primary" :icon="Plus" @click="handleAdd">新增</el-button>
+        <el-button type="primary" plain @click="handleAdd">新增</el-button>
       </template>
       <template #toolbar-right>
         <TableTools v-model:size="tableSize" :columns="columnSettings" @refresh="load"/>

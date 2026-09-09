@@ -142,8 +142,8 @@ const handleEdit = (row: MenuSimpleVO) => {
 
     <TablePanel>
       <template #toolbar-left>
-        <el-button icon="Plus" type="primary" v-perm="'system:menu:add'" @click="handleAdd">新增</el-button>
-        <el-button type="success" @click="toggleExpandAll">{{ isAllExpanded ? '收起' : '展开' }}</el-button>
+        <el-button type="primary" plain v-perm="'system:menu:add'" @click="handleAdd">新增</el-button>
+        <el-button type="success" plain @click="toggleExpandAll">{{ isAllExpanded ? '收起' : '展开' }}</el-button>
       </template>
 
       <template #toolbar-right>

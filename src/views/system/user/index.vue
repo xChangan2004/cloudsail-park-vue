@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {onMounted, reactive, ref} from 'vue'
 import {ElMessage, ElMessageBox} from 'element-plus'
-import {Plus} from '@element-plus/icons-vue'
 import {delUserApi, pageUserApi, resetPwdApi, updateUserStatusApi} from '@/api/user'
 import type {UserPageVO} from '@/api/user'
 import SearchPanel from '@/components/SearchPanel/index.vue'
@@ -138,7 +137,7 @@ const handleStatusBeforeChange = async (row: UserPageVO) => {
     <!-- 表格面板 -->
     <TablePanel :pagination="pagination" @page-change="load">
       <template #toolbar-left>
-        <el-button type="primary" :icon="Plus" @click="handleAdd">新增</el-button>
+        <el-button type="primary" plain @click="handleAdd">新增</el-button>
       </template>
       <template #toolbar-right>
         <TableTools v-model:size="tableSize" :columns="columnSettings" @refresh="load"/>
