@@ -1,5 +1,4 @@
-import service from '@/utils/request'
-import {get, post} from '@/utils/request'
+import service, {get} from '@/utils/request'
 import type {PageDTO, PageParams} from "@/types/api";
 
 export interface SysOperateLogVO {
@@ -47,6 +46,17 @@ export const exportOperlogApi = (params: SysOperateLogPageParams) => {
     method: 'POST',
     params,
     responseType: 'blob',
+  })
+}
+
+/**
+ * 批量删除操作日志
+ */
+export const batchDeleteOperlogApi = (ids: string[]) => {
+  return service({
+    url: '/admin/system/operlog/batch',
+    method: 'DELETE',
+    data: ids
   })
 }
 

@@ -4,9 +4,9 @@ import TablePanel from "@/components/TablePanel/index.vue";
 import TableTools from "@/components/TableTools/index.vue";
 import {onMounted, reactive, ref} from "vue";
 import {usePaginationTable} from "@/hooks/usePaginationTable";
-import {exportOperlogApi, pageOperlogApi, type SysOperateLogVO} from "@/api/operlog";
+import {batchDeleteOperlogApi, exportOperlogApi, pageOperlogApi, type SysOperateLogVO} from "@/api/operlog";
 import {pageUserApi} from "@/api/user";
-import {ElLoading, ElMessage} from "element-plus";
+import {ElLoading, ElMessage, ElMessageBox} from "element-plus";
 
 defineOptions({name: 'SystemOperlog'})
 
@@ -136,6 +136,42 @@ const handleExport = async () => {
     loading.close()
   }
 }
+
+// 勾选
+const selectedRows = ref<SysOperateLogVO[]>([])
+const handleSelectedChange = (rows: SysOperateLogVO[]) => {
+  selectedRows.value = rows
+}
+
+// 删除
+const handleDelete = async () => {
+  if (!selectedRows.value.length) {
+    ElMessage.warning('请先勾选要删除的数据')
+    return
+  }
+  // 提取所有选中行的id
+  const ids = selectedRows.value.map(item => item.id)
+  try {
+    await ElMessageBox.confirm(
+      `是否确认删除选中 ${ids.length} 条操作日志？`,
+      '提示',
+      {
+        type: 'warning',
+        confirmButtonText: '确认删除',
+        confirmButtonClass: 'el-button--danger'
+      }
+    )
+    // 调用批量删除接口
+    await batchDeleteOperlogApi(ids)
+    ElMessage.success('删除成功')
+    // 清空选中行
+    selectedRows.value = []
+    // 刷新表格数据
+    await load()
+  } catch (err) {
+    return
+  }
+}
 </script>
 
 <template>
@@ -183,8 +219,8 @@ const handleExport = async () => {
 
     <TablePanel :pagination="pagination" @page-change="load">
       <template #toolbar-left>
-        <el-button type="danger" plain>删除</el-button>
-        <el-button type="warning" plain @click="handleExport">导出</el-button>
+        <el-button type="danger" plain :disabled="!selectedRows.length" @click="handleDelete" v-perm="'system:operlog:delete'">删除</el-button>
+        <el-button type="warning" plain @click="handleExport" v-perm="'system:operlog:export'">导出</el-button>
       </template>
       <template #toolbar-right>
         <TableTools v-model:size="tableSize" :columns="columnSettings" @refresh="load"/>
@@ -198,6 +234,7 @@ const handleExport = async () => {
         height="100%"
         row-key="id"
         stripe
+        @selection-change="handleSelectedChange"
       >
         <el-table-column type="selection" align="center"/>
         <el-table-column type="index" label="序号" align="center" width="80"/>
