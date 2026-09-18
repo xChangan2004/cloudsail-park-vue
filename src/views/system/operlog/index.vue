@@ -75,7 +75,7 @@ const isColVisible = (prop: string) => columnSettings.find(c => c.prop === prop)
 
 onMounted(load)
 
-const descDialog = ref(true)
+const descDialog = ref(false)
 const rowData = ref<SysOperateLogVO>()
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 type ElTagType = 'primary' | 'success' | 'warning' | 'danger'
