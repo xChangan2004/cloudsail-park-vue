@@ -6,6 +6,7 @@ import {onMounted, reactive, ref} from "vue";
 import {usePaginationTable} from "@/hooks/usePaginationTable";
 import {pageOperlogApi, type SysOperateLogVO} from "@/api/operlog";
 import {pageUserApi} from "@/api/user";
+import {ElMessage} from "element-plus";
 
 defineOptions({name: 'SystemOperlog'})
 
@@ -29,8 +30,8 @@ const userLoading = ref(false)
 const loadUserOptions = async (keyword?: string) => {
   userLoading.value = true
   try {
-    const page = await pageUserApi({ pageNo: 1, pageSize: 20, username: keyword || undefined })
-    userOptions.value = page.list.map(u => ({ id: u.id, label: `${u.username}（${u.nickname}）` }))
+    const page = await pageUserApi({pageNo: 1, pageSize: 20, username: keyword || undefined})
+    userOptions.value = page.list.map(u => ({id: u.id, label: `${u.username}（${u.nickname}）`}))
   } finally {
     userLoading.value = false
   }
@@ -73,6 +74,42 @@ const columnSettings = reactive([
 const isColVisible = (prop: string) => columnSettings.find(c => c.prop === prop)?.visible ?? true
 
 onMounted(load)
+
+const descDialog = ref(true)
+const rowData = ref<SysOperateLogVO>()
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
+type ElTagType = 'primary' | 'success' | 'warning' | 'danger'
+
+const httpTagMap: Record<HttpMethod, ElTagType> = {
+  GET: 'success',
+  POST: 'primary',
+  PUT: 'warning',
+  DELETE: 'danger'
+}
+
+const openDesc = (row: SysOperateLogVO) => {
+  rowData.value = row
+  descDialog.value = true
+}
+
+/**
+ * 复制文本到剪贴板
+ * @param text 要复制的内容
+ */
+const copyText = async (text?: string) => {
+  if (!text) {
+    ElMessage.warning('暂无可复制的内容')
+    return false
+  }
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('复制成功')
+    return true
+  } catch (err) {
+    ElMessage.error('复制失败，请手动选择复制')
+    return false
+  }
+}
 </script>
 
 <template>
@@ -165,12 +202,154 @@ onMounted(load)
           </template>
         </el-table-column>
         <el-table-column label="操作" fixed="right" width="80px" align="center">
-          <template #default>
-            <el-button link type="primary" icon="view">详细</el-button>
+          <template #default="{row}">
+            <el-button @click="openDesc(row)" link type="primary" icon="view">详细</el-button>
           </template>
         </el-table-column>
       </el-table>
     </TablePanel>
+
+    <el-dialog
+      title="操作日志详情"
+      v-model="descDialog"
+    >
+      <div class="detail-wrap" v-if="rowData">
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <el-icon color="#409eff" style="margin-right: 5px">
+              <InfoFilled/>
+            </el-icon>
+            基本信息
+          </div>
+          <el-row class="detail-row">
+            <el-col :span="12">
+              <div class="detail-item">
+                <div class="detail-label">操作模块</div>
+                <div class="detail-value">{{ rowData?.type }}</div>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="detail-item">
+                <div class="detail-label">业务类型</div>
+                <div class="detail-value">{{ rowData?.subType }}</div>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="detail-row">
+            <el-col :span="12">
+              <div class="detail-item">
+                <div class="detail-label">操作时间</div>
+                <div class="detail-value">{{ rowData?.createTime }}</div>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="detail-item">
+                <div class="detail-label">执行状态</div>
+                <div class="detail-value">{{ rowData?.success ? '成功' : '失败' }}</div>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <el-icon color="#409eff" style="margin-right: 5px">
+              <User/>
+            </el-icon>
+            操作人员
+          </div>
+          <el-row class="detail-row">
+            <el-col :span="12">
+              <div class="detail-item">
+                <div class="detail-label">操作人员</div>
+                <div class="detail-value">{{ rowData?.username }}</div>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="detail-item">
+                <div class="detail-label">操作地址</div>
+                <div class="detail-value">{{ rowData?.userIp }}</div>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <el-icon color="#409eff" style="margin-right: 5px">
+              <Sort/>
+            </el-icon>
+            请求信息
+          </div>
+          <el-row class="detail-row">
+            <div class="detail-item">
+              <div class="detail-label">请求地址</div>
+              <div class="detail-value">
+                <el-tag :type="httpTagMap[rowData?.requestMethod as HttpMethod] ?? 'info'">
+                  {{ rowData?.requestMethod }}
+                </el-tag>
+                {{ rowData?.requestUrl }}
+              </div>
+            </div>
+          </el-row>
+          <el-row class="detail-row">
+            <div class="detail-item">
+              <div class="detail-label">操作方法</div>
+              <div class="detail-value">{{ rowData?.method }}</div>
+            </div>
+          </el-row>
+          <el-row class="detail-row">
+            <div class="detail-item">
+              <div class="detail-label">消耗时间</div>
+              <div class="detail-value">{{ rowData?.costMs }} 毫秒</div>
+            </div>
+          </el-row>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <el-icon color="#409eff" style="margin-right: 5px">
+              <Upload/>
+            </el-icon>
+            请求参数
+          </div>
+          <div class="code-body">
+            <div class="code-wrap">
+              <div class="code-action">
+                <el-button icon="copy-document" size="small" @click="copyText(rowData?.action)">复制</el-button>
+              </div>
+              <pre class="code-pre">{{ rowData?.action }}</pre>
+            </div>
+          </div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-title">
+            <el-icon color="#409eff" style="margin-right: 5px">
+              <Download/>
+            </el-icon>
+            返回参数
+          </div>
+          <div class="code-body">
+            <div class="code-wrap">
+              <div class="code-action">
+                <el-button icon="copy-document" size="small" @click="copyText(rowData?.jsonResult)">复制</el-button>
+              </div>
+              <pre class="code-pre">{{ rowData?.jsonResult ?? '(无数据)' }}</pre>
+            </div>
+          </div>
+        </div>
+        <div class="detail-card" v-if="!rowData?.success">
+          <div class="detail-card-title">
+            <el-icon color="#c0392b" style="margin-right: 5px">
+              <InfoFilled/>
+            </el-icon>
+            异常信息
+          </div>
+          <div class="error-body">
+            <div class="error-msg">
+              {{ rowData?.errorMsg }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -180,5 +359,106 @@ onMounted(load)
   flex-direction: column;
   gap: 16px;
   height: 100%;
+}
+
+.detail-wrap {
+  padding: 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  .detail-card {
+    border: 1px solid #ebeef5;
+    border-radius: 6px;
+
+    .detail-card-title {
+      display: flex;
+      align-items: center;
+      background-color: #f7f9fb;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 1px solid #ebeef5;
+    }
+
+    .detail-row {
+      padding: 0 8px;
+
+      .detail-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 8px;
+        font-size: 13px;
+
+        .detail-label {
+          flex-shrink: 0;
+          width: 72px;
+          color: #909399;
+          margin-right: 12px;
+        }
+
+        .detail-value {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: #303133;
+          flex: 1;
+          word-break: break-all;
+        }
+      }
+    }
+
+    .code-body {
+      padding: 14px;
+
+      .code-wrap {
+        background: #f7f9fb;
+        border: 1px solid #e8ecf0;
+        border-radius: 4px;
+        overflow: hidden;
+        max-height: 260px;
+        position: relative;
+
+        .code-action {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          margin: 0;
+          padding: 0;
+        }
+
+        .code-pre {
+          padding: 14px;
+          font-size: 12px;
+          font-family: Consolas, SFMono-Regular, monospace;
+          line-height: 1.6;
+          color: #444;
+          white-space: pre-wrap;
+          word-break: break-all;
+          overflow: auto;
+          max-height: 260px;
+          display: block;
+          text-align: left !important;
+        }
+      }
+    }
+
+    .error-body {
+      padding: 12px 16px;
+
+      .error-msg {
+        background: #fff8f8;
+        border-left: 3px solid #e74c3c;
+        border-radius: 3px;
+        padding: 8px 12px;
+        color: #c0392b;
+        font-size: 12px;
+        line-height: 1.7;
+        word-break: break-all;
+        white-space: pre-wrap;
+      }
+    }
+  }
 }
 </style>

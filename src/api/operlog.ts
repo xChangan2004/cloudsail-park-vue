@@ -14,6 +14,8 @@ export interface SysOperateLogVO {
   requestUrl: string
   userIp: string
   createTime: string
+  method?: string
+  jsonResult?: string
 }
 
 /**
