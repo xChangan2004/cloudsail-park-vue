@@ -69,6 +69,9 @@ const detailLoading = ref(false)
 watch(() => props.modelValue, async (open) => {
   if (!open) return
   Object.assign(form, defaultForm())
+  if(!props.id && props.parentId) {
+    form.parentId = props.parentId
+  }
   if (props.id) {
     detailLoading.value = true
     try {
@@ -176,8 +179,8 @@ const handleSubmit = async () => {
             <el-switch :active-value="1" :inactive-value="0" v-model="form.status"/>
           </el-form-item>
         </el-col>
-        <el-col :span="8" v-if="form.type === 2" prop="keepAlive">
-          <el-form-item label="页面缓存">
+        <el-col :span="8" v-if="form.type === 2">
+          <el-form-item label="页面缓存" prop="keepAlive">
             <el-switch :active-value="true" :inactive-value="false" v-model="form.keepAlive"/>
           </el-form-item>
         </el-col>
