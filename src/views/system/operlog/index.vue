@@ -4,9 +4,9 @@ import TablePanel from "@/components/TablePanel/index.vue";
 import TableTools from "@/components/TableTools/index.vue";
 import {onMounted, reactive, ref} from "vue";
 import {usePaginationTable} from "@/hooks/usePaginationTable";
-import {pageOperlogApi, type SysOperateLogVO} from "@/api/operlog";
+import {exportOperlogApi, pageOperlogApi, type SysOperateLogVO} from "@/api/operlog";
 import {pageUserApi} from "@/api/user";
-import {ElMessage} from "element-plus";
+import {ElLoading, ElMessage} from "element-plus";
 
 defineOptions({name: 'SystemOperlog'})
 
@@ -110,6 +110,32 @@ const copyText = async (text?: string) => {
     return false
   }
 }
+
+const handleExport = async () => {
+  const loading = ElLoading.service({text: '正在导出...'})
+  try {
+    const res = await exportOperlogApi({
+      ...query,
+      beginTime: dateRange.value?.[0] ? dateRange.value[0] + ' 00:00:00' : undefined,
+      endTime: dateRange.value?.[1] ? dateRange.value[1] + ' 23:59:59' : undefined,
+      pageNo: pagination.pageNo,
+      pageSize: pagination.pageSize
+    })
+    const blob = res.data as Blob
+
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `操作日志_${Date.now()}.xlsx`
+    a.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (err) {
+    ElMessage.error('导出失败')
+  } finally {
+    loading.close()
+  }
+}
 </script>
 
 <template>
@@ -158,7 +184,7 @@ const copyText = async (text?: string) => {
     <TablePanel :pagination="pagination" @page-change="load">
       <template #toolbar-left>
         <el-button type="danger" plain>删除</el-button>
-        <el-button type="warning" plain>导出</el-button>
+        <el-button type="warning" plain @click="handleExport">导出</el-button>
       </template>
       <template #toolbar-right>
         <TableTools v-model:size="tableSize" :columns="columnSettings" @refresh="load"/>

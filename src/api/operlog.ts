@@ -1,4 +1,5 @@
-import {get} from '@/utils/request'
+import service from '@/utils/request'
+import {get, post} from '@/utils/request'
 import type {PageDTO, PageParams} from "@/types/api";
 
 export interface SysOperateLogVO {
@@ -36,3 +37,16 @@ export interface SysOperateLogPageParams extends PageParams {
 export const pageOperlogApi = (params: SysOperateLogPageParams) => {
   return get<PageDTO<SysOperateLogVO>>('/admin/system/operlog/page', params)
 }
+
+/**
+ * 导出操作日志
+ */
+export const exportOperlogApi = (params: SysOperateLogPageParams) => {
+  return service({
+    url: '/admin/system/operlog/export',
+    method: 'POST',
+    params,
+    responseType: 'blob',
+  })
+}
+
