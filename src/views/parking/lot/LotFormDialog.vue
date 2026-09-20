@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {computed, nextTick, reactive, ref, watch} from "vue";
-import {ElMessage, type FormInstance, type FormRules} from "element-plus";
-import {addParkingLotApi, editParkingLotApi, getParkingLotApi, type ParkingLotFormDTO} from "@/api/parkingLot.ts";
+import {ElMessage, type FormInstance, type FormItemRule, type FormRules} from "element-plus";
+import {addParkingLotApi, editParkingLotApi, getParkingLotApi, type ParkingLotFormDTO} from "@/api/parkingLot";
 
 defineOptions({name: 'LotFormDialog'})
 
@@ -37,10 +37,22 @@ const defaultForm = (): ParkingLotFormDTO => ({
 const formRef = ref<FormInstance>()
 const form = reactive<ParkingLotFormDTO>(defaultForm())
 
+/** 经纬度校验器：可选字段，填了才校验数字和范围 */
+const rangeValidator = (label: string, min: number, max: number): FormItemRule['validator'] =>
+  (_rule, value, callback) => {
+    if (value === undefined || value === null || value === '') return callback()
+    const num = Number(value)
+    if (Number.isNaN(num)) return callback(new Error(`${label}必须是数字`))
+    if (num < min || num > max) return callback(new Error(`${label}范围为 ${min} ~ ${max}`))
+    callback()
+  }
+
 const rules: FormRules = {
   name: {required: true, message: '请输入名称', trigger: 'blur'},
   address: {required: true, message: '请输入地址', trigger: 'blur'},
   status: {required: true, message: '请选择状态', trigger: 'blur'},
+  longitude: [{validator: rangeValidator('经度', -180, 180), trigger: 'blur'}],
+  latitude: [{validator: rangeValidator('纬度', -90, 90), trigger: 'blur'}],
 }
 
 const detailLoading = ref(false)
