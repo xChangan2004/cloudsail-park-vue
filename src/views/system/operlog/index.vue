@@ -7,6 +7,7 @@ import {usePaginationTable} from "@/hooks/usePaginationTable";
 import {batchDeleteOperlogApi, exportOperlogApi, pageOperlogApi, type SysOperateLogVO} from "@/api/operlog";
 import {pageUserApi} from "@/api/user";
 import {ElLoading, ElMessage, ElMessageBox} from "element-plus";
+import {Download, InfoFilled, Sort, Upload, User} from "@element-plus/icons-vue";
 
 defineOptions({name: 'SystemOperlog'})
 
@@ -164,6 +165,10 @@ const handleDelete = async () => {
     // 调用批量删除接口
     await batchDeleteOperlogApi(ids)
     ElMessage.success('删除成功')
+    // 删光了当前页且不是第一页，回退一页，避免停留在空页
+    if (ids.length === tableData.value.length && pagination.pageNo > 1) {
+      pagination.pageNo--
+    }
     // 清空选中行
     selectedRows.value = []
     // 刷新表格数据
@@ -308,7 +313,7 @@ const handleDelete = async () => {
             <el-col :span="12">
               <div class="detail-item">
                 <div class="detail-label">执行状态</div>
-                <div class="detail-value">{{ rowData?.success ? '成功' : '失败' }}</div>
+                <div class="detail-value">{{ rowData?.success == 1 ? '成功' : '失败' }}</div>
               </div>
             </el-col>
           </el-row>
@@ -398,7 +403,7 @@ const handleDelete = async () => {
             </div>
           </div>
         </div>
-        <div class="detail-card" v-if="!rowData?.success">
+        <div class="detail-card" v-if="rowData?.success != 1">
           <div class="detail-card-title">
             <el-icon color="#c0392b" style="margin-right: 5px">
               <InfoFilled/>
