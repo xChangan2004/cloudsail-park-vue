@@ -7,6 +7,7 @@ import {usePaginationTable} from "@/hooks/usePaginationTable";
 import {pageParkingLotApi, type ParkingLot, updateParkingLotStatusApi} from "@/api/parkingLot";
 import {updateUserStatusApi, type UserPageVO} from "@/api/user.ts";
 import {ElMessage} from "element-plus";
+import LotFormDialog from "@/views/parking/lot/LotFormDialog.vue";
 
 defineOptions({name: 'ParkingLot'})
 
@@ -56,6 +57,19 @@ const handleStatusBeforeChange = async (row: UserPageVO) => {
   ElMessage.success('切换状态成功')
   return true
 }
+
+const dialogVisible = ref(false)
+const editingId = ref<string | null>(null)
+
+const handleAdd = () => {
+  dialogVisible.value = true
+  editingId.value = null
+}
+
+const handleEdit = (id: string) => {
+  dialogVisible.value = true
+  editingId.value = id
+}
 </script>
 
 <template>
@@ -77,7 +91,7 @@ const handleStatusBeforeChange = async (row: UserPageVO) => {
 
     <TablePanel :pagination="pagination" @page-change="load">
       <template #toolbar-left>
-        <el-button type="primary" plain>新增</el-button>
+        <el-button type="primary" plain @click="handleAdd">新增</el-button>
       </template>
       <template #toolbar-right>
         <TableTools v-model:size="tableSize" :columns="columnSettings" @refresh="load"/>
@@ -102,7 +116,7 @@ const handleStatusBeforeChange = async (row: UserPageVO) => {
         <el-table-column v-if="isColVisible('longitude')" label="经度" prop="longitude"/>
         <el-table-column v-if="isColVisible('latitude')" label="纬度" prop="latitude"/>
         <el-table-column v-if="isColVisible('contact')" label="联系方式" prop="contact"/>
-        <el-table-column v-if="isColVisible('status')" label="状态" prop="status">
+        <el-table-column v-if="isColVisible('status')" label="状态" prop="status" width="90">
           <template #default="{row}">
             <el-switch
               :model-value="row.status"
@@ -112,9 +126,15 @@ const handleStatusBeforeChange = async (row: UserPageVO) => {
             />
           </template>
         </el-table-column>
-        <el-table-column v-if="isColVisible('createTime')" label="创建时间" prop="createTime"/>
+        <el-table-column v-if="isColVisible('createTime')" label="创建时间" prop="createTime" width="180"/>
+        <el-table-column label="操作" fixed="right">
+          <template #default="{row}">
+            <el-button type="warning" icon="Edit" size="small" @click="handleEdit(row.id)"/>
+          </template>
+        </el-table-column>
       </el-table>
     </TablePanel>
+    <LotFormDialog v-model="dialogVisible" :id="editingId" @success="load"/>
   </div>
 </template>
 
