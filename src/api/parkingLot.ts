@@ -1,4 +1,4 @@
-import {get, post, put} from '@/utils/request'
+import {get, post, put, del} from '@/utils/request'
 import type {PageDTO, PageParams} from '@/types/api'
 
 export interface ParkingLot {
@@ -63,4 +63,11 @@ export const editParkingLotApi = (data: ParkingLotFormDTO) => {
  */
 export const getParkingLotApi = (id: string) => {
   return get<ParkingLotFormDTO>('/admin/parking/lot/' + id)
+}
+
+/**
+ * 删除停车场
+ */
+export const delParkingLotApi = (id: string) => {
+  return del<null>('/admin/parking/lot/' + id)
 }

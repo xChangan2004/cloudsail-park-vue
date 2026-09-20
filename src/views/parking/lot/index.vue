@@ -4,9 +4,8 @@ import TablePanel from "@/components/TablePanel/index.vue";
 import TableTools from "@/components/TableTools/index.vue";
 import {onMounted, reactive, ref} from "vue";
 import {usePaginationTable} from "@/hooks/usePaginationTable";
-import {pageParkingLotApi, type ParkingLot, updateParkingLotStatusApi} from "@/api/parkingLot";
-import {updateUserStatusApi, type UserPageVO} from "@/api/user.ts";
-import {ElMessage} from "element-plus";
+import {delParkingLotApi, pageParkingLotApi, type ParkingLot, updateParkingLotStatusApi} from "@/api/parkingLot";
+import {ElMessage, ElMessageBox} from "element-plus";
 import LotFormDialog from "@/views/parking/lot/LotFormDialog.vue";
 
 defineOptions({name: 'ParkingLot'})
@@ -50,9 +49,9 @@ const isColVisible = (prop: string) => columnSettings.find(c => c.prop === prop)
 
 onMounted(load)
 
-const handleStatusBeforeChange = async (row: UserPageVO) => {
+const handleStatusBeforeChange = async (row: ParkingLot) => {
   const next = row.status === 1 ? 0 : 1
-  await updateParkingLotStatusApi(row.id, next)
+  await updateParkingLotStatusApi(row.id!, next)
   row.status = next
   ElMessage.success('切换状态成功')
   return true
@@ -69,6 +68,22 @@ const handleAdd = () => {
 const handleEdit = (id: string) => {
   dialogVisible.value = true
   editingId.value = id
+}
+
+const handleDelete = async (row: ParkingLot) => {
+  if (!row.id) return
+  try {
+    await ElMessageBox.confirm(`确认要删除停车场 [${row.name}] 吗？`, '提示', {
+      type: 'warning',
+      confirmButtonText: '确认',
+      confirmButtonClass: 'el-button--danger'
+    })
+  } catch {
+    return
+  }
+  await delParkingLotApi(row.id)
+  ElMessage.success('删除成功')
+  await load()
 }
 </script>
 
@@ -130,6 +145,7 @@ const handleEdit = (id: string) => {
         <el-table-column label="操作" fixed="right">
           <template #default="{row}">
             <el-button type="warning" icon="Edit" size="small" @click="handleEdit(row.id)"/>
+            <el-button type="danger" icon="Delete" size="small" @click="handleDelete(row)"/>
           </template>
         </el-table-column>
       </el-table>
