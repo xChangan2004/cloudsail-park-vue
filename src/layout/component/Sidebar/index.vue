@@ -2,37 +2,39 @@
 import {computed} from 'vue'
 import {useRoute} from 'vue-router'
 import {useAppStore, useUserStore} from '@/stores'
-import {joinPath} from '@/utils/menu'
+import {joinPath, sortMenuTree} from '@/utils/menu'
 import Logo from "./Logo.vue"
 
 const appStore = useAppStore()
 const userStore = useUserStore()
 const route = useRoute()
 
-const menus = computed(() => userStore.menus
-  .filter(m => m.visible !== false)
-  .map(m => {
-    // 顶级单页：渲染成一级菜单
-    if (m.type === 2) {
-      return {
-        path: m.path,
-        meta: {
-          title: m.name, icon: m.icon
+const menus = computed(() => {
+  return sortMenuTree(userStore.menus)
+    .filter(m => m.visible !== false)
+    .map(m => {
+      // 顶级单页：渲染成一级菜单
+      if (m.type === 2) {
+        return {
+          path: m.path,
+          meta: {
+            title: m.name, icon: m.icon
+          }
         }
       }
-    }
-    // 目录
-    return {
-      path: m.path,
-      meta: {title: m.name, icon: m.icon},
-      children: (m.children ?? [])
-        .filter(m => m.visible !== false)
-        .map(c => ({
-          path: joinPath(m.path, c.path),
-          meta: {title: c.name, icon: c.icon}
-        }))
-    }
-  }))
+      // 目录
+      return {
+        path: m.path,
+        meta: {title: m.name, icon: m.icon},
+        children: (m.children ?? [])
+          .filter(m => m.visible !== false)
+          .map(c => ({
+            path: joinPath(m.path, c.path),
+            meta: {title: c.name, icon: c.icon}
+          }))
+      }
+    })
+})
 
 const activeMenu = computed(() => route.path)
 </script>

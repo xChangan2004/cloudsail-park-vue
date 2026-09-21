@@ -37,6 +37,25 @@ const resolveLoader = (component?: string) => {
 }
 
 /**
+ * 递归排序整棵菜单树，返回新数组，不修改原对象
+ */
+export function sortMenuTree(menus: MenuVO[]): MenuVO[] {
+  // 拷贝数组再排序，避免原地sort污染原始数据
+  return [...menus]
+    .sort((a, b) => Number(a.sort ?? 0) - Number(b.sort ?? 0))
+    .map(item => {
+      if (item.children && item.children.length > 0) {
+        // 递归对子菜单排序
+        return {
+          ...item,
+          children: sortMenuTree(item.children)
+        }
+      }
+      return item
+    })
+}
+
+/**
  * menu转路由表
  */
 const menuToRoutes = (menus: MenuVO[], parentPath: string): RouteRecordRaw[] => {
@@ -53,7 +72,7 @@ const menuToRoutes = (menus: MenuVO[], parentPath: string): RouteRecordRaw[] => 
           title: m.name,
           icon: m.icon,
           keepAlive: m.keepAlive ?? false
-        }
+        },
       } as RouteRecordRaw
     })
     .filter(Boolean) as RouteRecordRaw[]
@@ -78,7 +97,7 @@ export const buildRoutesFromMenus = (menus: MenuVO[]): RouteRecordRaw[] => {
             icon: m.icon,
             keepAlive: m.keepAlive ?? false
           }
-        }]
+        }],
       }
     }
     // 目录
