@@ -24,8 +24,12 @@ const lotId = ref('')
 /** 停车场下拉选项 */
 const lotOptions = ref<ParkingLot[]>([])
 const loadLotOptions = async () => {
-  const page = await pageParkingLotApi({pageNo: 1, pageSize: 200})
-  lotOptions.value = page.list
+  try {
+    const page = await pageParkingLotApi({pageNo: 1, pageSize: 200})
+    lotOptions.value = page.list
+  } catch {
+    ElMessage.error('停车场下拉数据加载失败')
+  }
 }
 
 /** 顶部统计：总车位 / 可用 */
