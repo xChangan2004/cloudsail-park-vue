@@ -125,7 +125,7 @@ const handleDelete = async (row: ParkingLot) => {
         <el-table-column v-if="isColVisible('address')" label="地址" prop="address" width="160" show-overflow-tooltip/>
         <el-table-column v-if="isColVisible('spaces')" label="可用/总车位" prop="totalSpaces">
           <template #default="{row}">
-            <span>{{ row.usedSpaces }}/{{ row.totalSpaces }}</span>
+            <span>{{ row.freeSpaces }}/{{ row.totalSpaces }}</span>
           </template>
         </el-table-column>
         <el-table-column v-if="isColVisible('longitude')" label="经度" prop="longitude"/>

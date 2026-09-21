@@ -11,7 +11,7 @@ export interface ParkingLot {
   contact?: string
   status: 0 | 1
   createTime: string
-  usedSpaces: number
+  freeSpaces: number
 }
 
 export interface ParkingLotPageParams extends PageParams {
@@ -62,7 +62,7 @@ export const editParkingLotApi = (data: ParkingLotFormDTO) => {
  * 查询停车场详情
  */
 export const getParkingLotApi = (id: string) => {
-  return get<ParkingLotFormDTO>('/admin/parking/lot/' + id)
+  return get<ParkingLot>('/admin/parking/lot/' + id)
 }
 
 /**
