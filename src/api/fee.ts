@@ -34,7 +34,7 @@ export interface FeeRule {
   firstHourRate?: number
   additionalRate?: number
   dailyCap?: number
-  timeSegment?: TimeSegment[]
+  timeSegments?: TimeSegment[]
   tiers?: Tier[]
   status: 0 | 1
   createTime: string
