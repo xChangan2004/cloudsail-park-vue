@@ -1,4 +1,4 @@
-import {del, get, put} from '@/utils/request'
+import {del, get, post, put} from '@/utils/request'
 import type {PageDTO, PageParams} from "@/types/api";
 
 export type FeeRuleType = 1 | 2 | 3
@@ -20,7 +20,7 @@ export interface TimeSegment {
 
 /** 阶梯 */
 export interface Tier {
-  endMinutes?: number
+  endMinutes?: number | null
   rate?: number
 }
 
@@ -50,8 +50,9 @@ export interface FeeRuleFormDTO {
   firstHourRate?: number
   additionalRate?: number
   dailyCap?: number
-  timeSegment?: TimeSegment[]
+  timeSegments?: TimeSegment[]
   tiers?: Tier[]
+  status: 0 | 1
 }
 
 /** 分页查询计费规则 */
@@ -67,4 +68,19 @@ export const updateFeeRuleStatusApi = (id: string, status: 0 | 1) => {
 /** 删除计费规则 */
 export const delFeeRuleApi = (id: string) => {
   return del<null>(`/admin/parking/fee-rule/${id}`)
+}
+
+/** 查询计费详情 */
+export const getFeeRuleApi = (id: string) => {
+  return get<FeeRule>(`/admin/parking/fee-rule/${id}`)
+}
+
+/** 新增计费规则 */
+export const addFeeRuleApi = (data: FeeRuleFormDTO) => {
+  return post<null>('/admin/parking/fee-rule', data)
+}
+
+/** 编辑计费规则 */
+export const editFeeRuleApi = (data: FeeRuleFormDTO) => {
+  return put<null>(`/admin/parking/fee-rule`, data)
 }

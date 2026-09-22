@@ -8,6 +8,7 @@ import TableTools from "@/components/TableTools/index.vue";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {pageParkingLotApi, type ParkingLot} from "@/api/parkingLot";
 import {InfoFilled, Warning} from "@element-plus/icons-vue";
+import FeeFormDialog from "@/views/fee/FeeFormDialog.vue";
 
 defineOptions({name: 'Fee'})
 
@@ -234,6 +235,19 @@ const handleDelete = async (row: FeeRule) => {
   ElMessage.success('删除成功')
   await load()
 }
+
+const dialogVisible = ref(false)
+const editingId = ref<string | null>(null)
+
+const handleAdd = () => {
+  dialogVisible.value = true
+  editingId.value = null
+}
+
+const handleEdit = (id: string) => {
+  dialogVisible.value = true
+  editingId.value = id
+}
 </script>
 
 <template>
@@ -273,7 +287,7 @@ const handleDelete = async (row: FeeRule) => {
 
     <TablePanel :pagination="pagination" @page-change="load">
       <template #toolbar-left>
-        <el-button type="primary" plain>新增</el-button>
+        <el-button type="primary" plain @click="handleAdd">新增</el-button>
       </template>
       <template #toolbar-right>
         <TableTools v-model:size="tableSize" :columns="columnSettings" @refresh="load"/>
@@ -315,7 +329,7 @@ const handleDelete = async (row: FeeRule) => {
         <el-table-column label="操作" fixed="right" width="180">
           <template #default="{row}">
             <el-button type="primary" icon="view" size="small" @click="handleView(row)"/>
-            <el-button type="warning" icon="edit" size="small"/>
+            <el-button type="warning" icon="edit" size="small" @click="handleEdit(row.id)"/>
             <el-button type="danger" icon="delete" size="small" @click="handleDelete(row)"/>
           </template>
         </el-table-column>
@@ -462,6 +476,7 @@ const handleDelete = async (row: FeeRule) => {
         </div>
       </div>
     </el-dialog>
+    <FeeFormDialog v-model="dialogVisible" :id="editingId" :lot-options="lotOptions" @success="load"/>
   </div>
 </template>
 
