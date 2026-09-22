@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import SearchPanel from "@/components/SearchPanel/index.vue";
 import {computed, onMounted, reactive, ref} from "vue";
-import {type FeeRule, type FeeRuleType, pageFeeRuleApi, updateFeeRuleStatusApi} from "@/api/fee";
+import {delFeeRuleApi, type FeeRule, type FeeRuleType, pageFeeRuleApi, updateFeeRuleStatusApi} from "@/api/fee";
 import {usePaginationTable} from "@/hooks/usePaginationTable";
 import TablePanel from "@/components/TablePanel/index.vue";
 import TableTools from "@/components/TableTools/index.vue";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus";
 import {pageParkingLotApi, type ParkingLot} from "@/api/parkingLot";
-import {Download, InfoFilled, Sort, Upload, User, Warning} from "@element-plus/icons-vue";
+import {InfoFilled, Warning} from "@element-plus/icons-vue";
 
 defineOptions({name: 'Fee'})
 
@@ -218,6 +218,22 @@ const gridColumns = computed(() => {
   const total = 2 + rateCount
   return total <= 4 ? Math.max(total, 1) : Math.min(4, Math.ceil(total / 2))
 })
+
+const handleDelete = async (row: FeeRule) => {
+  if (!row.id) return
+  try {
+    await ElMessageBox.confirm(`确认要删除规则 [${row.ruleName}] 吗？删除后无法恢复`, '提示', {
+      type: 'warning',
+      confirmButtonText: '确认',
+      confirmButtonClass: 'el-button--danger'
+    })
+  } catch {
+    return
+  }
+  await delFeeRuleApi(row.id)
+  ElMessage.success('删除成功')
+  await load()
+}
 </script>
 
 <template>
@@ -300,7 +316,7 @@ const gridColumns = computed(() => {
           <template #default="{row}">
             <el-button type="primary" icon="view" size="small" @click="handleView(row)"/>
             <el-button type="warning" icon="edit" size="small"/>
-            <el-button type="danger" icon="delete" size="small"/>
+            <el-button type="danger" icon="delete" size="small" @click="handleDelete(row)"/>
           </template>
         </el-table-column>
       </el-table>

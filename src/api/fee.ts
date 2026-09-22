@@ -1,4 +1,4 @@
-import {get, put} from '@/utils/request'
+import {del, get, put} from '@/utils/request'
 import type {PageDTO, PageParams} from "@/types/api";
 
 export type FeeRuleType = 1 | 2 | 3
@@ -62,4 +62,9 @@ export const pageFeeRuleApi = (params: FeeRuleQuery) => {
 /** 修改计费规则状态 */
 export const updateFeeRuleStatusApi = (id: string, status: 0 | 1) => {
   return put<null>(`/admin/parking/fee-rule/${id}/status?status=${status}`)
+}
+
+/** 删除计费规则 */
+export const delFeeRuleApi = (id: string) => {
+  return del<null>(`/admin/parking/fee-rule/${id}`)
 }
