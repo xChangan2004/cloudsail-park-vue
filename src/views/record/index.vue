@@ -95,8 +95,8 @@ const {pagination, tableData, loading, load, search} = usePaginationTable<EntryE
   pageRecordApi,
   () => ({
     ...query,
-    beginTime: dateRange.value?.[0] ? dateRange.value[0] + '00:00:00' : undefined,
-    endTime: dateRange.value?.[1] ? dateRange.value[1] + '23:59:59' : undefined
+    beginTime: dateRange.value?.[0] ? dateRange.value[0] + ' 00:00:00' : undefined,
+    endTime: dateRange.value?.[1] ? dateRange.value[1] + ' 23:59:59' : undefined
   })
 )
 
