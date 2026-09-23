@@ -62,3 +62,16 @@ export interface ExitBillVO {
 export const manualExitApi = (data: ExitFormDTO) => {
   return post<ExitBillVO>('/admin/record/exit', data)
 }
+
+/** 入场表单实体 */
+export interface EntryFormDTO {
+  lotId: string
+  spaceId: string
+  plateNumber: string
+  entryTime: string
+}
+
+/** 手动入场 */
+export const manualEntryApi = (data: EntryFormDTO) => {
+  return post<null>('/admin/record/entry', data)
+}

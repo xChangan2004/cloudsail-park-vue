@@ -16,8 +16,9 @@ import {ElMessage, type FormInstance, type FormRules} from "element-plus";
 import {pageCustomerApi} from "@/api/customer";
 import {copyText} from "@/utils/clipboard";
 import {formatDuration} from "@/utils/duration";
-import ExitBillPanel from "./components/ExitBillPanel.vue";
+import ExitBillPanel from "./ExitBillPanel.vue";
 import dayjs from "dayjs";
+import EntryFormDialog from "./EntryFormDialog.vue";
 
 defineOptions({name: 'Record'})
 
@@ -175,6 +176,9 @@ const handleExit = async () => {
     exiting.value = false
   }
 }
+
+/** 手动入场弹窗 */
+const entryDialog = ref(false)
 </script>
 
 <template>
@@ -254,7 +258,14 @@ const handleExit = async () => {
 
     <TablePanel :pagination="pagination" @page-change="load">
       <template #toolbar-left>
-        <el-button type="primary" plain>手动入场</el-button>
+        <el-button
+          v-perm="'parking:record:entry'"
+          type="primary"
+          plain
+          @click="entryDialog = true"
+        >
+          手动入场
+        </el-button>
       </template>
       <template #toolbar-right>
         <TableTools v-model:size="tableSize" :columns="columnSettings" @refresh="load"/>
@@ -271,9 +282,9 @@ const handleExit = async () => {
       >
         <el-table-column label="序号" type="index" width="66" align="center"/>
         <el-table-column v-if="isColVisible('lotName')" label="停车场" prop="lotName" align="center"/>
-        <el-table-column v-if="isColVisible('spaceCode')" label="车位编号" prop="spaceCode" align="center"/>
-        <el-table-column v-if="isColVisible('customerName')" label="客户昵称" prop="customerName" align="center"/>
-        <el-table-column v-if="isColVisible('plateNumber')" label="车牌号码" prop="plateNumber" align="center"/>
+        <el-table-column v-if="isColVisible('spaceCode')" label="车位编号" prop="spaceCode" align="center" width="100"/>
+        <el-table-column v-if="isColVisible('customerName')" label="客户昵称" prop="customerName" align="center" width="140"/>
+        <el-table-column v-if="isColVisible('plateNumber')" label="车牌号码" prop="plateNumber" align="center" width="120"/>
         <el-table-column v-if="isColVisible('entryType')" label="入场类型" prop="entryType" align="center" width="90">
           <template #default="{row}">
             <el-tag :type="typeMap[row.entryType as EntryType].type ?? 'info'" effect="plain">
@@ -290,7 +301,7 @@ const handleExit = async () => {
         </el-table-column>
         <el-table-column v-if="isColVisible('entryTime')" label="入场时间" prop="entryTime" align="center" width="180"/>
         <el-table-column v-if="isColVisible('exitTime')" label="出场时间" prop="exitTime" align="center" width="180"/>
-        <el-table-column v-if="isColVisible('duration')" label="停车时长" prop="duration" align="center">
+        <el-table-column v-if="isColVisible('duration')" label="停车时长" prop="duration" align="center" width="160">
           <template #default="{row}">
             {{ rowDuration(row) }}
             <span v-if="isOngoing(row)" class="cell-ongoing">· 在场中</span>
@@ -350,6 +361,12 @@ const handleExit = async () => {
         </template>
       </template>
     </el-dialog>
+    <EntryFormDialog
+      v-model="entryDialog"
+      :lot-options="lotOptions"
+      :default-lot-id="query.lotId"
+      @success="load"
+    />
   </div>
 </template>
 
