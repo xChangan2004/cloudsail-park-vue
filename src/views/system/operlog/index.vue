@@ -6,6 +6,7 @@ import {onMounted, reactive, ref} from "vue";
 import {usePaginationTable} from "@/hooks/usePaginationTable";
 import {batchDeleteOperlogApi, exportOperlogApi, pageOperlogApi, type SysOperateLogVO} from "@/api/operlog";
 import {pageUserApi} from "@/api/user";
+import {copyText} from "@/utils/clipboard";
 import {ElLoading, ElMessage, ElMessageBox} from "element-plus";
 import {Download, InfoFilled, Sort, Upload, User} from "@element-plus/icons-vue";
 
@@ -91,25 +92,6 @@ const httpTagMap: Record<HttpMethod, ElTagType> = {
 const openDesc = (row: SysOperateLogVO) => {
   rowData.value = row
   descDialog.value = true
-}
-
-/**
- * 复制文本到剪贴板
- * @param text 要复制的内容
- */
-const copyText = async (text?: string) => {
-  if (!text) {
-    ElMessage.warning('暂无可复制的内容')
-    return false
-  }
-  try {
-    await navigator.clipboard.writeText(text)
-    ElMessage.success('复制成功')
-    return true
-  } catch (err) {
-    ElMessage.error('复制失败，请手动选择复制')
-    return false
-  }
 }
 
 const handleExport = async () => {
