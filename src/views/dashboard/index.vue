@@ -19,13 +19,7 @@ import TrendChart from './components/TrendChart.vue'
 import OrderDonutChart from './components/OrderDonutChart.vue'
 import RegisterTrendChart from './components/RegisterTrendChart.vue'
 
-/**
- * 组件名必须与「路由 name」一致，否则 keep-alive 的 include 匹配不上（tagsView.cachedViews 存的是路由 name）。
- * 路由 name 由菜单 path 推导（见 src/utils/menu.ts 的 toRouteName）：
- * 菜单种子 docs/rbac.sql 是「目录 /dashboard」+「菜单 index」，故 fullPath = /dashboard/index → name = DashboardIndex。
- * ⚠️ 改这里之前先确认 sys_menu 里看板菜单的层级，改错不会报错，只会静默失去缓存。
- */
-defineOptions({name: 'DashboardIndex'})
+defineOptions({name: 'Dashboard'})
 
 /** 当前所选停车场，空字符串表示全部 */
 const lotId = ref('')
