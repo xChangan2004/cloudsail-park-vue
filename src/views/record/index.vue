@@ -2,12 +2,22 @@
 import SearchPanel from "@/components/SearchPanel/index.vue";
 import TablePanel from "@/components/TablePanel/index.vue";
 import TableTools from "@/components/TableTools/index.vue";
-import {onMounted, reactive, ref} from "vue";
+import {nextTick, onMounted, reactive, ref} from "vue";
 import {usePaginationTable} from "@/hooks/usePaginationTable";
-import {type EntryExitRecordPageVO, type EntryExitStatus, type EntryType, pageRecordApi} from "@/api/record";
+import {
+  type EntryExitRecordPageVO,
+  type EntryExitStatus,
+  type EntryType, type ExitBillVO, type ExitFormDTO,
+  manualExitApi,
+  pageRecordApi
+} from "@/api/record";
 import {pageParkingLotApi, type ParkingLot} from "@/api/parkingLot";
-import {ElMessage} from "element-plus";
+import {ElMessage, type FormInstance, type FormRules} from "element-plus";
 import {pageCustomerApi} from "@/api/customer";
+import {copyText} from "@/utils/clipboard";
+import {formatDuration} from "@/utils/duration";
+import ExitBillPanel from "./components/ExitBillPanel.vue";
+import dayjs from "dayjs";
 
 defineOptions({name: 'Record'})
 
@@ -85,10 +95,28 @@ const typeMap: Record<EntryType, { label: string, type: 'primary' | 'success' }>
 }
 
 /** 状态展示映射 */
-const statusMap: Record<EntryExitStatus, { label: string, type: 'info' | 'success' | 'danger' }> = {
-  0: {label: '待入场', type: 'info'},
-  1: {label: '已入场', type: 'success'},
-  2: {label: '已离场', type: 'danger'},
+const statusMap: Record<EntryExitStatus, { label: string, type: 'warning' | 'primary' | 'success' }> = {
+  0: {label: '待入场', type: 'warning'},
+  1: {label: '已入场', type: 'primary'},
+  2: {label: '已离场', type: 'success'},
+}
+
+/** 在场中：后端 duration 只对「已出场」的记录计算，在场记录拿到的是 null */
+const isOngoing = (row: EntryExitRecordPageVO) => row.status === 1 && !!row.entryTime
+
+/**
+ * 列表行的停车时长
+ *
+ * 在场记录后端不返回 duration（calculateDuration 里 exitTime 为空直接返回 null），
+ * 直接渲染会一直显示「--」—— 而在场车辆停了多久恰恰最该看见（用来发现长时间占位车）。
+ * 所以这里用入场时间现算，并在模板里标注「在场中」，避免被当成最终时长读。
+ * 值和其它列一样是「本次查询时」的快照，重查即更新。
+ */
+const rowDuration = (row: EntryExitRecordPageVO) => {
+  if (isOngoing(row)) {
+    return formatDuration(dayjs().diff(dayjs(row.entryTime), 'minute'))
+  }
+  return formatDuration(row.duration)
 }
 
 const {pagination, tableData, loading, load, search} = usePaginationTable<EntryExitRecordPageVO>(
@@ -106,6 +134,47 @@ onMounted(() => {
   // 延迟加载表格，优先渲染下拉
   setTimeout(() => load(), 100)
 })
+
+/** 离场 */
+const exitDialog = ref(false)
+const exitForm = reactive<ExitFormDTO>({
+  id: '',
+  exitTime: ''
+})
+
+const exitFormRef = ref<FormInstance>()
+const exitRules: FormRules = {
+  id: {required: true, message: '离场的记录ID不能为空', trigger: 'blur'},
+  exitTime: {required: true, message: '离场时间不能为空', trigger: 'blur'},
+}
+
+type Stage = 'form' | 'bill'
+const stage = ref<Stage>('form')
+const bill = ref<ExitBillVO>()
+const exiting = ref(false)
+
+const openExitDialog = async (id: string) => {
+  exitForm.id = id
+  exitForm.exitTime = dayjs().format('YYYY-MM-DD HH:mm:ss') // 默认当前时间
+  bill.value = undefined
+  stage.value = 'form'
+  exitDialog.value = true
+  await nextTick()
+  // 打开弹窗时清空上次校验提示
+  exitFormRef?.value?.clearValidate()
+}
+
+const handleExit = async () => {
+  await exitFormRef?.value?.validate()
+  exiting.value = true
+  try {
+    bill.value = await manualExitApi(exitForm)
+    stage.value = 'bill' // 原地切视图
+    void load() // 列表在背后刷新
+  } finally {
+    exiting.value = false
+  }
+}
 </script>
 
 <template>
@@ -221,14 +290,66 @@ onMounted(() => {
         </el-table-column>
         <el-table-column v-if="isColVisible('entryTime')" label="入场时间" prop="entryTime" align="center" width="180"/>
         <el-table-column v-if="isColVisible('exitTime')" label="出场时间" prop="exitTime" align="center" width="180"/>
-        <el-table-column v-if="isColVisible('duration')" label="停车时长" prop="duration" align="center"/>
+        <el-table-column v-if="isColVisible('duration')" label="停车时长" prop="duration" align="center">
+          <template #default="{row}">
+            {{ rowDuration(row) }}
+            <span v-if="isOngoing(row)" class="cell-ongoing">· 在场中</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" fixed="right" align="center">
           <template #default="{row}">
-            <el-button :disabled="[0, 2].includes(row.status)" type="danger" link>离场</el-button>
+            <el-button
+              v-perm="'parking:record:exit'"
+              :disabled="[0, 2].includes(row.status)"
+              type="danger"
+              link
+              @click="openExitDialog(row.id)"
+            >
+              离场
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
     </TablePanel>
+    <el-dialog
+      v-model="exitDialog"
+      width="400px"
+      :title="stage === 'form' ? '离场' : '出场结算'"
+      :close-on-click-modal="false"
+      :close-on-press-escape="stage === 'form'"
+    >
+      <el-form
+        v-if="stage === 'form'"
+        ref="exitFormRef"
+        label-width="80px"
+        :model="exitForm"
+        :rules="exitRules"
+      >
+        <el-form-item label="选中记录" prop="id">
+          <el-input disabled :value="exitForm.id"/>
+        </el-form-item>
+        <el-form-item label="离场时间" prop="exitTime">
+          <el-date-picker
+            v-model="exitForm.exitTime"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            type="datetime"
+            placeholder="请选择离场时间"
+          />
+        </el-form-item>
+      </el-form>
+      <ExitBillPanel v-else :bill="bill"/>
+
+      <template #footer>
+        <template v-if="stage === 'form'">
+          <el-button @click="exitDialog = false">取消</el-button>
+          <el-button type="primary" :loading="exiting" @click="handleExit">确认</el-button>
+        </template>
+        <template v-else>
+          <el-button @click="copyText(bill?.orderNo)">复制订单号</el-button>
+          <el-button type="primary" @click="exitDialog = false">完成</el-button>
+        </template>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -238,5 +359,11 @@ onMounted(() => {
   flex-direction: column;
   gap: 16px;
   height: 100%;
+}
+
+/* 在场记录是「实时变化中」的时长，弱化标注，避免被当成最终值 */
+.cell-ongoing {
+  font-size: 12px;
+  color: #a8abb2;
 }
 </style>
