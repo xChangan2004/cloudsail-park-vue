@@ -5,6 +5,7 @@ import {ElMessage, type FormInstance, type FormRules} from "element-plus";
 import {type EntryFormDTO, manualEntryApi} from "@/api/record";
 import dayjs from "dayjs";
 import {pageParkingSpaceApi, type ParkingSpace, type SpaceType} from "@/api/parkingSpace";
+import {PLATE_NUMBER_REGEX} from "@/api/customer";
 
 defineOptions({name: 'EntryFormDialog'})
 
@@ -34,9 +35,6 @@ const form = reactive<EntryFormDTO>({
   plateNumber: '',
   entryTime: '',
 })
-
-const PLATE_NUMBER_REGEX =
-  /^(?:[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领][A-Z](?:[0-9]{5}[ABCDEFGHJK]|[ABCDEFGHJK][A-HJ-NP-Z0-9][0-9]{4})|[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领]\d{3}\d{1,3}领|[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领][A-Z][A-HJ-NP-Z0-9]{4}[A-HJ-NP-Z0-9挂学警港澳使领])$/;
 
 const rules: FormRules = {
   lotId: {required: true, message: '请选择停车场', trigger: 'change'},
