@@ -2,6 +2,7 @@
 import {computed, nextTick, reactive, ref, watch} from "vue";
 import {ElMessage, type FormInstance, type FormItemRule, type FormRules} from "element-plus";
 import {addParkingLotApi, editParkingLotApi, getParkingLotApi, type ParkingLotFormDTO} from "@/api/parkingLot";
+import LocationPicker from "@/views/parking/lot/components/LocationPicker.vue";
 
 defineOptions({name: 'LotFormDialog'})
 
@@ -49,10 +50,12 @@ const rangeValidator = (label: string, min: number, max: number): FormItemRule['
 
 const rules: FormRules = {
   name: {required: true, message: '请输入名称', trigger: 'blur'},
-  address: {required: true, message: '请输入地址', trigger: 'blur'},
+  address: {required: true, message: '请选择位置', trigger: 'blur'},
   status: {required: true, message: '请选择状态', trigger: 'blur'},
-  longitude: [{validator: rangeValidator('经度', -180, 180), trigger: 'blur'}],
-  latitude: [{validator: rangeValidator('纬度', -90, 90), trigger: 'blur'}],
+  longitude: [{required: true, message: '请选择位置', trigger: 'blur'},
+    {validator: rangeValidator('经度', -180, 180), trigger: 'blur'}],
+  latitude: [{required: true, message: '请选择位置', trigger: 'blur'},
+    {validator: rangeValidator('纬度', -90, 90), trigger: 'blur'}],
 }
 
 const detailLoading = ref(false)
@@ -64,7 +67,7 @@ watch(() => props.modelValue, async (open) => {
   if (props.id) {
     detailLoading.value = true
     try {
-      const detail: ParkingLotFormDTO = await getParkingLotApi(props.id)
+      const detail = await getParkingLotApi(props.id) as ParkingLotFormDTO
       Object.assign(form, detail)
     } finally {
       detailLoading.value = false
@@ -74,6 +77,11 @@ watch(() => props.modelValue, async (open) => {
   await nextTick()
   formRef?.value?.clearValidate()
 })
+
+const handlePicked = () => {
+  formRef?.value?.validateField(['address', 'longitude', 'latitude']).catch(() => {
+  })
+}
 
 const submitting = ref(false)
 const handleSubmit = async () => {
@@ -111,21 +119,24 @@ const handleSubmit = async () => {
         <el-input v-model="form.name" placeholder="请输入名称"/>
       </el-form-item>
       <el-form-item label="地址" prop="address">
-        <el-input v-model="form.address" placeholder="请输入地址"/>
+        <el-input v-model="form.address" readonly placeholder="在地图中选点后自动填充"/>
       </el-form-item>
       <el-row :gutter="18">
         <el-col :span="9">
           <el-form-item label="经度" prop="longitude">
-            <el-input v-model.number="form.longitude" placeholder="请输入经度"/>
+            <el-input v-model.number="form.longitude" readonly placeholder="选点后填充"/>
           </el-form-item>
         </el-col>
         <el-col :span="9">
           <el-form-item label="纬度" prop="latitude">
-            <el-input v-model.number="form.latitude" placeholder="请输入纬度"/>
+            <el-input v-model.number="form.latitude" readonly placeholder="选点后填充"/>
           </el-form-item>
         </el-col>
         <el-col :span="6">
-          <el-button type="primary">选择地理位置</el-button>
+          <LocationPicker v-model:longitude="form.longitude" v-model:latitude="form.latitude"
+                          v-model:address="form.address"
+                          @picked="handlePicked"
+          />
         </el-col>
       </el-row>
       <el-form-item label="联系方式" prop="contact">
