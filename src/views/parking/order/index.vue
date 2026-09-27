@@ -2,11 +2,11 @@
 import SearchPanel from "@/components/SearchPanel/index.vue";
 import {onMounted, reactive, ref} from "vue";
 import {pageParkingLotApi, type ParkingLot} from "@/api/parkingLot.ts";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus";
 import TablePanel from "@/components/TablePanel/index.vue";
 import TableTools from "@/components/TableTools/index.vue";
 import {usePaginationTable} from "@/hooks/usePaginationTable.ts";
-import {type OrderStatus, pageParkingOrderApi, type ParkingOrderPageVO} from "@/api/order.ts";
+import {closeOrderApi, type OrderStatus, pageParkingOrderApi, type ParkingOrderPageVO} from "@/api/order.ts";
 import type {SpaceStatus} from "@/api/parkingSpace.ts";
 import {copyText} from "@/utils/clipboard.ts";
 
@@ -79,6 +79,30 @@ onMounted(() => {
   loadLotOptions()
   load()
 })
+
+/** 关闭订单 */
+const closing = ref(false)
+const handleCloseOrder = async (order: ParkingOrderPageVO) => {
+  if (!order.id || closing.value) return
+  try {
+    await ElMessageBox.confirm(
+      `订单号 ${order.orderNo ?? '--'}，应付金额 ¥${order.amount}。` +
+      '关闭后会同步关闭支付宝侧待支付交易，锁定中的优惠券将退回客户，且不可恢复。',
+      '确认关闭该订单？',
+      {type: 'warning', confirmButtonText: '关闭', confirmButtonClass: 'el-button--danger'}
+    )
+  } catch {
+    return // 用户点了取消
+  }
+  closing.value = true
+  try {
+    await closeOrderApi(order.id)
+    ElMessage.success('订单已关闭')
+    await load()
+  } finally {
+    closing.value = false
+  }
+}
 </script>
 
 <template>
@@ -177,7 +201,7 @@ onMounted(() => {
         <el-table-column label="操作" fixed="right" align="center">
           <template #default="{row}">
             <el-button :disabled="[0, 2, 3].includes(row.status)" type="danger" link>退款</el-button>
-            <el-button :disabled="[1, 2, 3].includes(row.status)" type="danger" link>关闭</el-button>
+            <el-button :disabled="[1, 2, 3].includes(row.status)" type="danger" link @click="handleCloseOrder(row)">关闭</el-button>
           </template>
         </el-table-column>
       </el-table>

@@ -1,4 +1,4 @@
-import {get} from '@/utils/request'
+import {get, put} from '@/utils/request'
 import type {PageDTO, PageParams} from "@/types/api";
 
 export type OrderStatus = 0 | 1 | 2 | 3
@@ -29,4 +29,9 @@ export interface ParkingOrderPageVO {
 /** 分页查询停车订单 */
 export const pageParkingOrderApi = (params: ParkingOrderQuery) => {
   return get<PageDTO<ParkingOrderPageVO>>('/admin/parking/order/page', params)
+}
+
+/** 关闭停车订单 */
+export const closeOrderApi = (id: string) => {
+  return put<null>(`/admin/parking/order/${id}/close`)
 }
