@@ -1,0 +1,32 @@
+import {get} from '@/utils/request'
+import type {PageDTO, PageParams} from "@/types/api";
+
+export type OrderStatus = 0 | 1 | 2 | 3
+
+export interface ParkingOrderQuery extends PageParams {
+  orderNo?: string
+  lotId?: string
+  plateNumber?: string
+  status?: OrderStatus
+  beginTime?: string
+  endTime?: string
+}
+
+export interface ParkingOrderPageVO {
+  id?: string
+  orderNo?: string
+  lotName?: string
+  plateNumber?: string
+  customerName?: string
+  amount?: number
+  discount?: number
+  paid?: number
+  status?: OrderStatus
+  paidTime?: string
+  createTime?: string
+}
+
+/** 分页查询停车订单 */
+export const pageParkingOrderApi = (params: ParkingOrderQuery) => {
+  return get<PageDTO<ParkingOrderPageVO>>('/admin/parking/order/page', params)
+}
