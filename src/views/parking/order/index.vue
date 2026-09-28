@@ -7,8 +7,8 @@ import TablePanel from "@/components/TablePanel/index.vue";
 import TableTools from "@/components/TableTools/index.vue";
 import {usePaginationTable} from "@/hooks/usePaginationTable.ts";
 import {closeOrderApi, type OrderStatus, pageParkingOrderApi, type ParkingOrderPageVO} from "@/api/order.ts";
-import type {SpaceStatus} from "@/api/parkingSpace.ts";
 import {copyText} from "@/utils/clipboard.ts";
+import RefundFormDialog from "@/views/parking/order/RefundFormDialog.vue";
 
 defineOptions({name: 'ParkingOrder'})
 
@@ -54,7 +54,7 @@ const {pagination, tableData, loading, load, search} = usePaginationTable<Parkin
   pageParkingOrderApi,
   () => ({
     ...query,
-    createTime: dateRange.value?.[0] ? dateRange.value[0] + ' 00:00:00' : undefined,
+    beginTime: dateRange.value?.[0] ? dateRange.value[0] + ' 00:00:00' : undefined,
     endTime: dateRange.value?.[1] ? dateRange.value[1] + ' 23:59:59' : undefined
   })
 )
@@ -103,6 +103,18 @@ const handleCloseOrder = async (order: ParkingOrderPageVO) => {
     closing.value = false
   }
 }
+
+const canRefund = (row: { status?: OrderStatus, paid?: number }) => {
+  return row.status === 1 && Number(row.paid ?? 0) > 0
+}
+
+const refundVisible = ref(false)
+const refundOrder = ref<ParkingOrderPageVO>()
+
+const openRefund = (order: ParkingOrderPageVO) => {
+  refundOrder.value = order
+  refundVisible.value = true
+}
 </script>
 
 <template>
@@ -124,9 +136,6 @@ const handleCloseOrder = async (order: ParkingOrderPageVO) => {
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="订单号">
-        <el-input v-model="query.orderNo" placeholder="请输入订单号" style="width: 240px"/>
-      </el-form-item>
       <el-form-item label="车牌号码">
         <el-input v-model="query.plateNumber" placeholder="请输入车牌号码" style="width: 240px"/>
       </el-form-item>
@@ -139,17 +148,22 @@ const handleCloseOrder = async (order: ParkingOrderPageVO) => {
           <el-option v-for="(v, k) in statusMap" :key="k" :label="v.label" :value="k"/>
         </el-select>
       </el-form-item>
+      <el-form-item label="订单号">
+        <el-input v-model="query.orderNo" placeholder="请输入订单号" style="width: 240px"/>
+      </el-form-item>
       <el-form-item label="下单时间">
         <el-date-picker
           v-model="dateRange"
+          value-format="YYYY-MM-DD"
           type="daterange"
+          range-separator="-"
           start-placeholder="开始时间"
           end-placeholder="结束时间"
           style="width: 240px"/>
       </el-form-item>
     </SearchPanel>
 
-    <TablePanel :pagination="pagination">
+    <TablePanel :pagination="pagination" @page-change="load">
       <template #toolbar-right>
         <TableTools v-model:size="tableSize" :columns="columnSettings" @refresh="search"/>
       </template>
@@ -200,12 +214,16 @@ const handleCloseOrder = async (order: ParkingOrderPageVO) => {
         <el-table-column v-if="isColVisible('createTime')" label="下单时间" prop="createTime" align="center"/>
         <el-table-column label="操作" fixed="right" align="center">
           <template #default="{row}">
-            <el-button :disabled="[0, 2, 3].includes(row.status)" type="danger" link>退款</el-button>
-            <el-button :disabled="[1, 2, 3].includes(row.status)" type="danger" link @click="handleCloseOrder(row)">关闭</el-button>
+            <el-button :disabled="!canRefund(row)" type="danger" link @click="openRefund(row)">退款
+            </el-button>
+            <el-button :disabled="[1, 2, 3].includes(row.status)" type="danger" link @click="handleCloseOrder(row)">
+              关闭订单
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
     </TablePanel>
+    <RefundFormDialog v-model="refundVisible" :order="refundOrder" @success="load"/>
   </div>
 </template>
 
