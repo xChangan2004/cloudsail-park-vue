@@ -11,8 +11,8 @@ export type PayMethodValue = 1 | 2
  *
  * 注意口径：
  * - todayIncome 按 paid_time 落在今天统计
- * - totalSpaces 是 COUNT(*)，包含「预留」「维修」车位；freeSpaces/occupiedSpaces 只统计 status=1/2
- *   所以 freeSpaces + occupiedSpaces 可能小于 totalSpaces，算占用率时别硬凑
+ * - totalSpaces 取自 parking_lot.total_spaces（人工录入）；occupiedSpaces 是该车场在场记录数；
+ *   freeSpaces 由后端按 max(0, totalSpaces - occupiedSpaces) 算好，前端直接用，别自己重算
  */
 export interface DashboardCards {
   /** 今日收入 */

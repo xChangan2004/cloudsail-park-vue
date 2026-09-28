@@ -9,7 +9,7 @@ import {
   type Tier
 } from "@/api/fee";
 import {ElMessage, type FormInstance, type FormRules} from "element-plus";
-import type {ParkingLot} from "@/api/parkingLot";
+import type {Lot} from "@/api/lot.ts";
 import {Warning} from "@element-plus/icons-vue";
 
 defineOptions({name: 'FeeFormDialog'})
@@ -20,7 +20,7 @@ const props = defineProps<{
   // 有值=编辑（查详情回填），无值=新增
   id?: string | null
   // 停车场下拉数据，由父页面传入
-  lotOptions: ParkingLot[]
+  lotOptions: Lot[]
 }>()
 
 const emit = defineEmits<{

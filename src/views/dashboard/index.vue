@@ -13,7 +13,7 @@ import {
   type OrderDistribution,
   type PayMethodStat
 } from '@/api/dashboard'
-import {pageParkingLotApi} from '@/api/parkingLot'
+import {pageParkingLotApi} from '@/api/lot.ts'
 import {useDashboardPolling} from '@/hooks/useDashboardPolling'
 import TrendChart from './components/TrendChart.vue'
 import OrderDonutChart from './components/OrderDonutChart.vue'
@@ -154,17 +154,15 @@ const deltaClass = computed(() => {
 /**
  * 车位统计
  *
- * 后端口径有个需要注意的地方：totalSpaces 是 COUNT(*)，包含「预留(3)」「维修(4)」车位，
- * 而 freeSpaces / occupiedSpaces 只统计 status=1 / 2。所以 free + occupied 可能小于 total，
- * 差额要显式暴露出来，不能拿它去凑总数，否则占用率会算不准。
+ * totalSpaces 是车场人工录入的总车位数，occupied 取该车场在场记录数，
+ * free 由后端按 max(0, total - occupied) 算好 —— 三者恒等，不存在「预留/维修」那类差额。
  */
 const space = computed(() => {
   const total = Number(cards.value?.totalSpaces ?? 0)
   const free = Number(cards.value?.freeSpaces ?? 0)
   const occupied = Number(cards.value?.occupiedSpaces ?? 0)
-  const other = Math.max(total - free - occupied, 0)
   const rate = total > 0 ? Math.round((occupied / total) * 100) : 0
-  return {total, free, occupied, other, rate}
+  return {total, free, occupied, rate}
 })
 
 /** 支付方式配色，贴近各自品牌色 */
@@ -270,10 +268,7 @@ const payTotal = computed(() => {
           <div class="metric__bar">
             <div class="metric__bar-inner" :style="{width: space.rate + '%'}"></div>
           </div>
-          <div class="metric__hint">
-            空闲 {{ int(space.free) }}
-            <template v-if="space.other > 0">· 预留/维修 {{ int(space.other) }}</template>
-          </div>
+          <div class="metric__hint">空闲 {{ int(space.free) }}</div>
         </div>
       </div>
 

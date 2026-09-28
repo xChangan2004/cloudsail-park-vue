@@ -22,7 +22,6 @@ export interface EntryExitRecordQuery extends PageParams {
 export interface EntryExitRecordPageVO {
   id?: string
   lotName?: string
-  spaceCode?: string
   customerName?: string
   plateNumber?: string
   entryType?: EntryType
@@ -66,7 +65,6 @@ export const manualExitApi = (data: ExitFormDTO) => {
 /** 入场表单实体 */
 export interface EntryFormDTO {
   lotId: string
-  spaceId: string
   plateNumber: string
   entryTime: string
 }

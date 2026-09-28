@@ -11,7 +11,7 @@ import {
   manualExitApi,
   pageRecordApi
 } from "@/api/record";
-import {pageParkingLotApi, type ParkingLot} from "@/api/parkingLot";
+import {pageParkingLotApi, type Lot} from "@/api/lot.ts";
 import {ElMessage, type FormInstance, type FormRules} from "element-plus";
 import {pageCustomerApi} from "@/api/customer";
 import {copyText} from "@/utils/clipboard";
@@ -61,7 +61,7 @@ const loadCustomerOptions = async (keyword?: string) => {
 }
 
 /** 停车场下拉选项 */
-const lotOptions = ref<ParkingLot[]>([])
+const lotOptions = ref<Lot[]>([])
 const loadLotOptions = async () => {
   try {
     const page = await pageParkingLotApi({pageNo: 1, pageSize: 200})
@@ -77,7 +77,6 @@ const tableSize = ref<'small' | 'default' | 'large'>('default')
 /** 列显示配置 */
 const columnSettings = reactive([
   {prop: 'lotName', label: '停车场', visible: true},
-  {prop: 'spaceCode', label: '车位编号', visible: true},
   {prop: 'customerName', label: '客户昵称', visible: true},
   {prop: 'plateNumber', label: '车牌号码', visible: true},
   {prop: 'entryType', label: '入场类型', visible: true},
@@ -282,7 +281,6 @@ const entryDialog = ref(false)
       >
         <el-table-column label="序号" type="index" width="66" align="center"/>
         <el-table-column v-if="isColVisible('lotName')" label="停车场" prop="lotName" align="center"/>
-        <el-table-column v-if="isColVisible('spaceCode')" label="车位编号" prop="spaceCode" align="center" width="100"/>
         <el-table-column v-if="isColVisible('customerName')" label="客户昵称" prop="customerName" align="center" width="140"/>
         <el-table-column v-if="isColVisible('plateNumber')" label="车牌号码" prop="plateNumber" align="center" width="120"/>
         <el-table-column v-if="isColVisible('entryType')" label="入场类型" prop="entryType" align="center" width="90">

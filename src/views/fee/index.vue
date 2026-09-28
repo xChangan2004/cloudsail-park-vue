@@ -6,14 +6,14 @@ import {usePaginationTable} from "@/hooks/usePaginationTable";
 import TablePanel from "@/components/TablePanel/index.vue";
 import TableTools from "@/components/TableTools/index.vue";
 import {ElMessage, ElMessageBox} from "element-plus";
-import {pageParkingLotApi, type ParkingLot} from "@/api/parkingLot";
+import {pageParkingLotApi, type Lot} from "@/api/lot.ts";
 import {InfoFilled, Warning} from "@element-plus/icons-vue";
 import FeeFormDialog from "@/views/fee/FeeFormDialog.vue";
 
 defineOptions({name: 'Fee'})
 
 /** 停车场下拉选项 */
-const lotOptions = ref<ParkingLot[]>([])
+const lotOptions = ref<Lot[]>([])
 const loadLotOptions = async () => {
   try {
     const page = await pageParkingLotApi({pageNo: 1, pageSize: 200})

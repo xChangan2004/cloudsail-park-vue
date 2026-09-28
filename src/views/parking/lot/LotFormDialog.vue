@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import {computed, nextTick, reactive, ref, watch} from "vue";
 import {ElMessage, type FormInstance, type FormItemRule, type FormRules} from "element-plus";
-import {addParkingLotApi, editParkingLotApi, getParkingLotApi, type ParkingLotFormDTO} from "@/api/parkingLot";
-import LocationPicker from "@/views/parking/lot/components/LocationPicker.vue";
+import {addParkingLotApi, editParkingLotApi, getParkingLotApi, type ParkingLotFormDTO} from "@/api/lot";
+import LocationPicker from "./components/LocationPicker.vue"
 
 defineOptions({name: 'LotFormDialog'})
 
@@ -29,6 +29,7 @@ const defaultForm = (): ParkingLotFormDTO => ({
   id: null,
   name: '',
   address: '',
+  totalSpaces: undefined,
   longitude: undefined,
   latitude: undefined,
   contact: '',
@@ -38,12 +39,13 @@ const defaultForm = (): ParkingLotFormDTO => ({
 const formRef = ref<FormInstance>()
 const form = reactive<ParkingLotFormDTO>(defaultForm())
 
-/** 经纬度校验器：可选字段，填了才校验数字和范围 */
-const rangeValidator = (label: string, min: number, max: number): FormItemRule['validator'] =>
+/** 数值校验器：可选字段填了才校验；integer=true 时额外要求整数 */
+const rangeValidator = (label: string, min: number, max: number, integer = false): FormItemRule['validator'] =>
   (_rule, value, callback) => {
     if (value === undefined || value === null || value === '') return callback()
     const num = Number(value)
     if (Number.isNaN(num)) return callback(new Error(`${label}必须是数字`))
+    if (integer && !Number.isInteger(num)) return callback(new Error(`${label}必须是整数`))
     if (num < min || num > max) return callback(new Error(`${label}范围为 ${min} ~ ${max}`))
     callback()
   }
@@ -56,6 +58,10 @@ const rules: FormRules = {
     {validator: rangeValidator('经度', -180, 180), trigger: 'blur'}],
   latitude: [{required: true, message: '请选择位置', trigger: 'blur'},
     {validator: rangeValidator('纬度', -90, 90), trigger: 'blur'}],
+  totalSpaces: [
+    {required: true, message: '请输入总车位数', trigger: 'blur'},
+    {validator: rangeValidator('总车位数', 1, 99999, true), trigger: 'blur'}
+  ],
 }
 
 const detailLoading = ref(false)
@@ -139,9 +145,18 @@ const handleSubmit = async () => {
           />
         </el-col>
       </el-row>
-      <el-form-item label="联系方式" prop="contact">
-        <el-input v-model="form.contact" placeholder="请输入联系方式"/>
-      </el-form-item>
+      <el-row>
+        <el-col :span="12">
+          <el-form-item label="联系方式" prop="contact">
+            <el-input v-model="form.contact" placeholder="请输入联系方式"/>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="总车位" prop="totalSpaces">
+            <el-input v-model.number="form.totalSpaces" placeholder="请输入总车位数"/>
+          </el-form-item>
+        </el-col>
+      </el-row>
       <el-form-item label="状态" prop="status">
         <el-select v-model="form.status" placeholder="请选择状态">
           <el-option label="启用" :value="1"/>

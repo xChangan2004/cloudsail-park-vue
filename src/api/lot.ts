@@ -1,7 +1,7 @@
 import {get, post, put, del} from '@/utils/request'
 import type {PageDTO, PageParams} from '@/types/api'
 
-export interface ParkingLot {
+export interface Lot {
   id?: string
   name: string
   address?: string
@@ -24,7 +24,7 @@ export interface ParkingLotPageParams extends PageParams {
  * 分页查询停车场信息
  */
 export const pageParkingLotApi = (params: ParkingLotPageParams) => {
-  return get<PageDTO<ParkingLot>>('/admin/parking/lot/page', params)
+  return get<PageDTO<Lot>>('/admin/parking/lot/page', params)
 }
 
 /**
@@ -38,6 +38,7 @@ export interface ParkingLotFormDTO {
   id: string | null
   name?: string
   address?: string
+  totalSpaces?: number
   longitude?: number
   latitude?: number
   contact?: string
@@ -62,7 +63,7 @@ export const editParkingLotApi = (data: ParkingLotFormDTO) => {
  * 查询停车场详情
  */
 export const getParkingLotApi = (id: string) => {
-  return get<ParkingLot>('/admin/parking/lot/' + id)
+  return get<Lot>('/admin/parking/lot/' + id)
 }
 
 /**

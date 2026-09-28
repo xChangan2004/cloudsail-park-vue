@@ -4,7 +4,7 @@ import TablePanel from "@/components/TablePanel/index.vue";
 import TableTools from "@/components/TableTools/index.vue";
 import {onMounted, reactive, ref} from "vue";
 import {usePaginationTable} from "@/hooks/usePaginationTable";
-import {delParkingLotApi, pageParkingLotApi, type ParkingLot, updateParkingLotStatusApi} from "@/api/parkingLot";
+import {delParkingLotApi, pageParkingLotApi, type Lot, updateParkingLotStatusApi} from "@/api/lot";
 import {ElMessage, ElMessageBox} from "element-plus";
 import LotFormDialog from "@/views/parking/lot/LotFormDialog.vue";
 
@@ -17,7 +17,7 @@ const query = reactive({
   status: undefined as number | undefined
 })
 
-const {pagination, tableData, loading, load, search} = usePaginationTable<ParkingLot>(
+const {pagination, tableData, loading, load, search} = usePaginationTable<Lot>(
   pageParkingLotApi,
   () => ({...query})
 )
@@ -49,7 +49,7 @@ const isColVisible = (prop: string) => columnSettings.find(c => c.prop === prop)
 
 onMounted(load)
 
-const handleStatusBeforeChange = async (row: ParkingLot) => {
+const handleStatusBeforeChange = async (row: Lot) => {
   const next = row.status === 1 ? 0 : 1
   await updateParkingLotStatusApi(row.id!, next)
   row.status = next
@@ -70,7 +70,7 @@ const handleEdit = (id: string) => {
   editingId.value = id
 }
 
-const handleDelete = async (row: ParkingLot) => {
+const handleDelete = async (row: Lot) => {
   if (!row.id) return
   try {
     await ElMessageBox.confirm(`确认要删除停车场 [${row.name}] 吗？`, '提示', {

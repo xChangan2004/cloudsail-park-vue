@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import SearchPanel from "@/components/SearchPanel/index.vue";
 import {onMounted, reactive, ref} from "vue";
-import {pageParkingLotApi, type ParkingLot} from "@/api/parkingLot.ts";
+import {pageParkingLotApi, type Lot} from "@/api/lot.ts";
 import {ElMessage, ElMessageBox} from "element-plus";
 import TablePanel from "@/components/TablePanel/index.vue";
 import TableTools from "@/components/TableTools/index.vue";
@@ -40,7 +40,7 @@ const statusMap: Record<OrderStatus, { label: string, type: 'success' | 'warning
 }
 
 /** 停车场下拉选项 */
-const lotOptions = ref<ParkingLot[]>([])
+const lotOptions = ref<Lot[]>([])
 const loadLotOptions = async () => {
   try {
     const page = await pageParkingLotApi({pageNo: 1, pageSize: 200})
