@@ -7,6 +7,7 @@ import {usePaginationTable} from "@/hooks/usePaginationTable";
 import {delParkingLotApi, pageParkingLotApi, type Lot, updateParkingLotStatusApi} from "@/api/lot";
 import {ElMessage, ElMessageBox} from "element-plus";
 import LotFormDialog from "@/views/parking/lot/LotFormDialog.vue";
+import {Picture} from "@element-plus/icons-vue";
 
 defineOptions({name: 'ParkingLot'})
 
@@ -35,6 +36,7 @@ const tableSize = ref<'small' | 'default' | 'large'>('default')
 
 /** 列显示配置 */
 const columnSettings = reactive([
+  {prop: 'cover', label: '封面', visible: true},
   {prop: 'name', label: '名称', visible: true},
   {prop: 'address', label: '地址', visible: true},
   {prop: 'spaces', label: '车位', visible: true},
@@ -121,17 +123,38 @@ const handleDelete = async (row: Lot) => {
         stripe
       >
         <el-table-column label="序号" type="index" width="80" align="center"/>
+        <el-table-column v-if="isColVisible('cover')" label="封面" prop="cover" width="100">
+          <template #default="{row}">
+            <div class="lot-cover-wrap">
+              <el-image
+                v-if="row.cover"
+                :src="row.cover"
+                fit="cover"
+                class="lot-cover"
+                :preview-src-list="[row.cover, ...(row.images ?? [])]"
+                preview-teleported
+                hide-on-click-modal
+              />
+              <div v-else class="lot-cover lot-cover--empty">
+                <el-icon>
+                  <Picture/>
+                </el-icon>
+              </div>
+              <span v-if="row.cover && row.images?.length" class="lot-cover-badge">{{ row.images.length }}</span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column v-if="isColVisible('name')" label="名称" prop="name" width="140" show-overflow-tooltip/>
         <el-table-column v-if="isColVisible('address')" label="地址" prop="address" width="160" show-overflow-tooltip/>
-        <el-table-column v-if="isColVisible('spaces')" label="可用/总车位" prop="totalSpaces">
+        <el-table-column v-if="isColVisible('spaces')" label="可用/总车位" prop="totalSpaces" align="center">
           <template #default="{row}">
             <span>{{ row.freeSpaces }}/{{ row.totalSpaces }}</span>
           </template>
         </el-table-column>
-        <el-table-column v-if="isColVisible('longitude')" label="经度" prop="longitude"/>
-        <el-table-column v-if="isColVisible('latitude')" label="纬度" prop="latitude"/>
+        <el-table-column v-if="isColVisible('longitude')" label="经度" prop="longitude" align="center"/>
+        <el-table-column v-if="isColVisible('latitude')" label="纬度" prop="latitude" align="center"/>
         <el-table-column v-if="isColVisible('contact')" label="联系方式" prop="contact"/>
-        <el-table-column v-if="isColVisible('status')" label="状态" prop="status" width="90">
+        <el-table-column v-if="isColVisible('status')" label="状态" prop="status" width="90" align="center">
           <template #default="{row}">
             <el-switch
               :model-value="row.status"
@@ -141,7 +164,8 @@ const handleDelete = async (row: Lot) => {
             />
           </template>
         </el-table-column>
-        <el-table-column v-if="isColVisible('createTime')" label="创建时间" prop="createTime" width="180"/>
+        <el-table-column v-if="isColVisible('createTime')" label="创建时间" prop="createTime" width="180"
+                         align="center"/>
         <el-table-column label="操作" fixed="right">
           <template #default="{row}">
             <el-button type="warning" icon="Edit" size="small" @click="handleEdit(row.id)"/>
@@ -160,5 +184,47 @@ const handleDelete = async (row: Lot) => {
   flex-direction: column;
   gap: 16px;
   height: 100%;
+}
+
+.lot-cover-wrap {
+  position: relative;
+  display: inline-block;
+  width: 64px;
+  height: 40px;
+  line-height: 0;
+  vertical-align: middle;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.lot-cover {
+  width: 64px;
+  height: 40px;
+  border-radius: 4px;
+  display: block;
+}
+
+.lot-cover--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1px dashed var(--el-border-color);
+  background: var(--el-fill-color-lighter);
+  color: var(--el-text-color-placeholder);
+  font-size: 16px;
+}
+
+.lot-cover-badge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 0 4px;
+  font-size: 10px;
+  line-height: 14px;
+  color: #fff;
+  background: rgb(0 0 0 / 55%);
+  border-radius: 0 0 4px 0;
+  pointer-events: none;
 }
 </style>

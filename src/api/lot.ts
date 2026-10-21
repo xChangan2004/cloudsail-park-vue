@@ -12,6 +12,8 @@ export interface Lot {
   status: 0 | 1
   createTime: string
   freeSpaces: number
+  cover?: string
+  images?: string[]
 }
 
 export interface ParkingLotPageParams extends PageParams {
@@ -43,6 +45,8 @@ export interface ParkingLotFormDTO {
   latitude?: number
   contact?: string
   status?: 0 | 1
+  cover?: string
+  images?: string[]
 }
 
 /**

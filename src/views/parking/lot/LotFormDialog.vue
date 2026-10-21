@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import {computed, nextTick, reactive, ref, watch} from "vue";
-import {ElMessage, type FormInstance, type FormItemRule, type FormRules} from "element-plus";
+import {ElMessage, type FormInstance, type FormItemRule, type FormRules, type UploadRequestOptions} from "element-plus";
 import {addParkingLotApi, editParkingLotApi, getParkingLotApi, type ParkingLotFormDTO} from "@/api/lot";
 import LocationPicker from "./components/LocationPicker.vue"
+import {uploadFileApi} from "@/api/upload.ts";
+import {ArrowLeft, ArrowRight, Delete, Plus} from "@element-plus/icons-vue";
 
 defineOptions({name: 'LotFormDialog'})
 
@@ -33,7 +35,9 @@ const defaultForm = (): ParkingLotFormDTO => ({
   longitude: undefined,
   latitude: undefined,
   contact: '',
-  status: 0
+  status: 0,
+  cover: '',
+  images: []
 })
 
 const formRef = ref<FormInstance>()
@@ -106,6 +110,75 @@ const handleSubmit = async () => {
     submitting.value = false
   }
 }
+
+const coverUploading = ref(false)
+
+/** 封面上传 */
+const handleCoverUpload = async (options: UploadRequestOptions) => {
+  const file = options.file
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.warning("图片不能超过 10MB")
+    return
+  }
+  coverUploading.value = true
+  try {
+    const res = await uploadFileApi(file)
+    form.cover = res.url
+  } catch {
+    // 不做操作
+  } finally {
+    coverUploading.value = false
+  }
+}
+
+/** 移除封面 */
+const clearCover = () => {
+  form.cover = ''
+}
+
+const imagesUploading = ref(false)
+
+const handleImageUpload = async (options: UploadRequestOptions) => {
+  if ((form.images?.length ?? 0) >= 9) {
+    ElMessage.warning('轮播图最多 9 张')
+    return
+  }
+
+  const file = options.file
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.warning('图片不能超过 10MB')
+    return
+  }
+  imagesUploading.value = true
+  try {
+    const res = await uploadFileApi(options.file)
+    form.images = [...(form.images ?? []), res.url]
+  } catch {
+    // 失败提示由请求拦截器统一弹出
+  } finally {
+    imagesUploading.value = false
+  }
+}
+
+const removeImage = (index: number) => {
+  const next = [...(form.images ?? [])]
+  next.splice(index, 1)
+  // 删空了也要传 []，传 null 后端会当成「不修改」，图删不掉
+  form.images = next
+}
+
+const moveImage = (index: number, offset: number) => {
+  const list = form.images ?? []
+  const target = index + offset
+  if (target < 0 || target >= list.length) return
+  const next = [...list]
+  // 取出当前项
+  const item = next.splice(index, 1)[0]
+  if (item === undefined) return
+  // 插入到目标位置
+  next.splice(target, 0, item)
+  form.images = next
+}
 </script>
 
 <template>
@@ -157,6 +230,85 @@ const handleSubmit = async () => {
           </el-form-item>
         </el-col>
       </el-row>
+      <el-form-item label="封面" prop="cover">
+        <div class="cover-field">
+          <div v-if="form.cover" class="cover-item">
+            <el-image
+              :src="form.cover"
+              fit="cover"
+              class="cover-img"
+              :preview-src-list="[form.cover]"
+              preview-teleported
+            />
+            <div class="cover-mask">
+              <el-icon class="cover-btn cover-danger" @click.stop="clearCover">
+                <Delete/>
+              </el-icon>
+            </div>
+          </div>
+          <el-upload
+            v-else
+            class="cover-uploader"
+            action="#"
+            :show-file-list="false"
+            :http-request="handleCoverUpload"
+            :disabled="coverUploading"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+          >
+            <div class="cover-box" v-loading="coverUploading">
+              <el-icon v-if="!coverUploading" class="cover-uploader-icon">
+                <Plus/>
+              </el-icon>
+            </div>
+          </el-upload>
+        </div>
+      </el-form-item>
+      <el-form-item label="轮播图" prop="images">
+        <div class="images-field">
+          <div class="images-grid">
+            <div v-for="(url, index) in form.images" :key="url" class="img-item">
+              <el-image
+                :src="url"
+                fit="cover"
+                class="img-thumb"
+                :preview-src-list="form.images"
+                :initial-index="index"
+                preview-teleported
+              />
+              <div class="img-mask">
+                <el-icon v-if="index > 0" class="img-btn" @click.stop="moveImage(index, -1)">
+                  <ArrowLeft/>
+                </el-icon>
+                <el-icon class="img-btn img-danger" @click.stop="removeImage(index)">
+                  <Delete/>
+                </el-icon>
+                <el-icon v-if="index < (form.images?.length ?? 0) - 1" class="img-btn"
+                         @click.stop="moveImage(index, 1)">
+                  <ArrowRight/>
+                </el-icon>
+              </div>
+              <span class="img-index">{{ index + 1 }}</span>
+            </div>
+
+            <el-upload
+              v-if="(form.images?.length ?? 0) < 9"
+              class="images-uploader"
+              action="#"
+              :show-file-list="false"
+              :http-request="handleImageUpload"
+              :disabled="imagesUploading"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+            >
+              <div class="img-trigger" v-loading="imagesUploading">
+                <el-icon v-if="!imagesUploading">
+                  <Plus/>
+                </el-icon>
+              </div>
+            </el-upload>
+          </div>
+          <div class="images-tip">最多 9 张，序号即用户端详情页的轮播顺序，鼠标移上去可左右调序</div>
+        </div>
+      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="form.status" placeholder="请选择状态">
           <el-option label="启用" :value="1"/>
@@ -172,5 +324,203 @@ const handleSubmit = async () => {
 </template>
 
 <style scoped lang="scss">
+.cover-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
+.cover-item {
+  position: relative;
+  width: 148px;
+  height: 100px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--el-fill-color-lighter);
+}
+
+.cover-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cover-mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 45%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.cover-item:hover .cover-mask {
+  opacity: 1;
+}
+
+.cover-btn {
+  font-size: 18px;
+  color: #fff;
+  cursor: pointer;
+  pointer-events: auto;
+
+  &:hover {
+    color: var(--el-color-primary);
+  }
+}
+
+.cover-danger:hover {
+  color: var(--el-color-danger);
+}
+
+.cover-uploader :deep(.el-upload) {
+  width: 148px;
+  height: 100px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: var(--el-fill-color-lighter);
+  color: var(--el-text-color-placeholder);
+  transition: border-color 0.2s, color 0.2s;
+  overflow: hidden;
+
+  &:hover {
+    border-color: var(--el-color-primary);
+    color: var(--el-color-primary);
+  }
+
+  &.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.cover-box {
+  width: 148px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-uploader-icon {
+  font-size: 24px;
+}
+
+.images-field {
+  width: 100%;
+}
+
+.images-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 88px);
+  gap: 8px;
+}
+
+.img-item {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--el-fill-color-lighter);
+}
+
+.img-thumb {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.img-mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgb(0 0 0 / 45%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.img-item:hover .img-mask {
+  opacity: 1;
+}
+
+.img-btn {
+  font-size: 16px;
+  color: #fff;
+  cursor: pointer;
+  pointer-events: auto;
+
+  &:hover {
+    color: var(--el-color-primary);
+  }
+}
+
+.img-danger:hover {
+  color: var(--el-color-danger);
+}
+
+.img-index {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 16px;
+  color: #fff;
+  background: rgb(0 0 0 / 55%);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.images-uploader :deep(.el-upload) {
+  width: 88px;
+  height: 88px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--el-fill-color-lighter);
+  color: var(--el-text-color-placeholder);
+  transition: border-color 0.2s, color 0.2s;
+
+  &:hover {
+    border-color: var(--el-color-primary);
+    color: var(--el-color-primary);
+  }
+
+  &.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.img-trigger {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.images-tip {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--el-text-color-secondary);
+}
 </style>
