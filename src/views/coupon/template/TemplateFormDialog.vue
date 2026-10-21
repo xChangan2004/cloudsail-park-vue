@@ -3,7 +3,6 @@ import {type CouponTemplateFormDTO, type CouponTemplatePageVO, editTemplateApi, 
 import {computed, nextTick, reactive, ref, watch} from "vue";
 import {ElMessage, type FormInstance, type FormItemRule, type FormRules} from "element-plus";
 import {InfoFilled, WarningFilled} from "@element-plus/icons-vue";
-import dayjs from "dayjs";
 
 defineOptions({name: 'TemplateFormDialog'})
 
@@ -70,7 +69,7 @@ const rules: FormRules = {
     {max: 20, message: '券名称不超过 20 个字', trigger: 'blur'},
   ],
   amount: [
-    {required: true, message: '请输入抵扣金额请', trigger: 'blur'},
+    {required: true, message: '请输入抵扣金额', trigger: 'blur'},
     {validator: validateAmount, trigger: 'blur'}
   ],
   threshold: [
@@ -186,10 +185,6 @@ const handleSubmit = async () => {
             <template #append>天</template>
           </el-input>
         </el-form-item>
-        <div class="form-hint" v-if="form.validDays">优惠券模板预计在 {{
-            dayjs().add(form.validDays, 'day').format('YYYY-MM-DD HH:mm:ss')
-          }} 后过期
-        </div>
       </el-form>
       <div class="tpl-preview">
         <div class="pv-label">用户端券面预览</div>
