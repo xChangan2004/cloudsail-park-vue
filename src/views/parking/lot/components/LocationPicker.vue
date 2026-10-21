@@ -100,10 +100,10 @@ const initMap = () => {
   // 防止重复初始化
   if (map.value) return
   window._AMapSecurityConfig = {
-    securityJsCode: '98d96b912baaf02d194a0c6d901bf7fe'
+    securityJsCode: 'aeb51547d4e72d05d9412c06f52d8c5a'
   }
   AMapLoader.load({
-    key: '360bd9439a7beb1da57e71ec77e1c09a',  // 申请好的Web端开发者Key，首次调用 load 时必填
+    key: 'e02d2c804e1cf15ed08bfffb2612ddb7',  // 申请好的Web端开发者Key，首次调用 load 时必填
     version: '2.0', // 指定要加载的 JSAPI 的版本，缺省时默认为 1.4.15
     plugins: [
       'AMap.Scale',
