@@ -14,6 +14,7 @@ export interface Lot {
   freeSpaces: number
   cover?: string
   images?: string[]
+  facilityCodes?: string[]
 }
 
 export interface ParkingLotPageParams extends PageParams {
@@ -47,6 +48,7 @@ export interface ParkingLotFormDTO {
   status?: 0 | 1
   cover?: string
   images?: string[]
+  facilityCodes?: string[]
 }
 
 /**

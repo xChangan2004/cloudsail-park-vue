@@ -5,6 +5,7 @@ import {addParkingLotApi, editParkingLotApi, getParkingLotApi, type ParkingLotFo
 import LocationPicker from "./components/LocationPicker.vue"
 import {uploadFileApi} from "@/api/upload.ts";
 import {ArrowLeft, ArrowRight, Delete, Plus} from "@element-plus/icons-vue";
+import {listFacilityApi, type ParkingFacility} from "@/api/facility"
 
 defineOptions({name: 'LotFormDialog'})
 
@@ -37,7 +38,8 @@ const defaultForm = (): ParkingLotFormDTO => ({
   contact: '',
   status: 0,
   cover: '',
-  images: []
+  images: [],
+  facilityCodes: []
 })
 
 const formRef = ref<FormInstance>()
@@ -68,6 +70,29 @@ const rules: FormRules = {
   ],
 }
 
+const facilityOptions = ref<ParkingFacility[]>([])
+const facilityLoading = ref(false)
+
+/** 只取启用中的设施，停用的一律不给勾 */
+const loadFacilities = async () => {
+  facilityLoading.value = true
+  try {
+    facilityOptions.value = (await listFacilityApi({status: 1})) ?? []
+  } catch {
+    // 错误提示交给请求拦截器，这里只保证不阻塞表单
+    facilityOptions.value = []
+  } finally {
+    facilityLoading.value = false
+  }
+}
+
+const facilityCodes = computed<string[]>({
+  get: () => form.facilityCodes ?? [],
+  set: (v) => {
+    form.facilityCodes = v
+  }
+})
+
 const detailLoading = ref(false)
 watch(() => props.modelValue, async (open) => {
   if (!open) return
@@ -83,7 +108,7 @@ watch(() => props.modelValue, async (open) => {
       detailLoading.value = false
     }
   }
-
+  await loadFacilities()
   await nextTick()
   formRef?.value?.clearValidate()
 })
@@ -309,6 +334,27 @@ const moveImage = (index: number, offset: number) => {
           <div class="images-tip">最多 9 张，序号即用户端详情页的轮播顺序，鼠标移上去可左右调序</div>
         </div>
       </el-form-item>
+      <el-form-item label="服务设施" prop="facilityCodes">
+        <el-checkbox-group
+          v-model="facilityCodes"
+          v-loading="facilityLoading"
+          class="facility-group"
+          :max="10"
+        >
+          <el-checkbox
+            v-for="f in facilityOptions"
+            :key="f.code"
+            :value="f.code"
+            class="facility-item"
+          >
+            <SvgIcon :name="f.icon" :width="18" :height="18"/>
+            <span>{{ f.name }}</span>
+          </el-checkbox>
+        </el-checkbox-group>
+        <div v-if="!facilityLoading && !facilityOptions.length" class="facility-tip">
+          还没有启用的服务设施，先去「停车场管理 → 服务设施」里配置
+        </div>
+      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="form.status" placeholder="请选择状态">
           <el-option label="启用" :value="1"/>
@@ -519,6 +565,56 @@ const moveImage = (index: number, offset: number) => {
 
 .images-tip {
   margin-top: 6px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--el-text-color-secondary);
+}
+
+.facility-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+}
+
+.facility-item {
+  height: 34px;
+  margin: 0;
+  padding: 0 10px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 6px;
+  background: var(--el-fill-color-lighter);
+  transition: border-color 0.2s, background-color 0.2s;
+
+  &:hover {
+    border-color: var(--el-color-primary-light-5);
+  }
+
+  &.is-checked {
+    border-color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+  }
+}
+
+.facility-item :deep(.el-checkbox__input) {
+  margin-right: 0;
+}
+
+.facility-item :deep(.el-checkbox__label) {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding-left: 6px;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+}
+
+.facility-item.is-checked :deep(.el-checkbox__label) {
+  color: var(--el-color-primary);
+}
+
+.facility-tip {
   font-size: 12px;
   line-height: 18px;
   color: var(--el-text-color-secondary);
